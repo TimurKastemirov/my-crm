@@ -29,7 +29,7 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Use `model()` for two-way bound properties with `[(prop)]` syntax instead of pairing `input()` with `output()`
 - Use `computed()` for derived state
 - Use `linkedSignal()` for state derived from multiple reactive sources that must stay synchronized
-- Prefer inline templates for small components
+- Write the template in a SEPARATE `.html` file and wire it via `templateUrl` (do NOT use inline templates)
 - Prefer Signal Forms (`@angular/forms/signals`) for new forms. They are stable in Angular v22+ and provide signal-based state, type-safe field access, and schema-based validation
 - When not using Signal Forms, prefer Reactive forms instead of Template-driven ones
 - Do NOT use `ngClass`, use `class` bindings instead
@@ -57,3 +57,13 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Use the `providedIn: 'root'` option for singleton services
 - Prefer the `@Service` decorator over `@Injectable({providedIn: 'root'})` for new singleton services (Angular v22+)
 - Use the `inject()` function instead of constructor injection
+
+## Component structure (required in this project)
+
+- **Every component lives in its own folder** (e.g. `features/auth/login/`).
+- **Template in a separate `.html` file** next to the component, wired via `templateUrl: './x.html'` — no inline templates.
+- **Keep component logic in a dedicated `XxxComponentService`**, not in the component class. Provide it via `providers: [XxxComponentService]` in the `@Component` decorator (per-component instance, not a root singleton).
+- **Naming:** `LoginComponent` + `LoginComponentService`.
+- `XxxComponentService` injects the API services (`ApiClient` / domain `*Api`) for backend calls.
+- The component stays thin: `protected readonly vm = inject(XxxComponentService)`, and the template reads `vm.*`.
+- Purely presentational components without logic (modal, paginator) don't need a service.

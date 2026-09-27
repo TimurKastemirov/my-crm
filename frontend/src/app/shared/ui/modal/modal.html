@@ -1,0 +1,32 @@
+@if (open()) {
+  <div
+    class="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:p-4"
+    (click)="close.emit()"
+  >
+    <div
+      cdkTrapFocus
+      role="dialog"
+      aria-modal="true"
+      class="max-h-[92dvh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:max-w-lg sm:rounded-2xl"
+      (click)="$event.stopPropagation()"
+      (keydown.escape)="close.emit()"
+    >
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-slate-900">{{ title() }}</h2>
+        <button
+          type="button"
+          (click)="close.emit()"
+          aria-label="Закрыть"
+          class="-mr-1 rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <div class="mt-4">
+        <ng-content />
+      </div>
+    </div>
+  </div>
+}

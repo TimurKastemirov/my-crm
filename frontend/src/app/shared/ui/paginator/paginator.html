@@ -1,0 +1,18 @@
+<div class="flex items-center justify-between gap-3 text-sm">
+  <span class="text-slate-500">Всего: {{ total() }}</span>
+  <div class="flex items-center gap-2">
+    <button
+      type="button"
+      [disabled]="page() <= 1"
+      (click)="pageChange.emit(page() - 1)"
+      class="rounded-lg border border-slate-300 px-3 py-2 font-medium text-slate-600 disabled:opacity-40"
+    >Назад</button>
+    <span class="min-w-8 text-center text-slate-500">{{ page() }}</span>
+    <button
+      type="button"
+      [disabled]="!hasNext()"
+      (click)="pageChange.emit(page() + 1)"
+      class="rounded-lg border border-slate-300 px-3 py-2 font-medium text-slate-600 disabled:opacity-40"
+    >Вперёд</button>
+  </div>
+</div>
