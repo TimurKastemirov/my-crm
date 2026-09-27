@@ -17,6 +17,7 @@ async function generate(): Promise<void> {
     preview: true,
     logger: false,
   });
+  app.setGlobalPrefix('api/v1'); // чтобы пути в спеке совпадали с рантаймом (/api/v1/...)
   const document = SwaggerModule.createDocument(app, buildOpenApiConfig());
   writeFileSync('openapi.json', JSON.stringify(document, null, 2));
   const paths = Object.keys(document.paths ?? {});

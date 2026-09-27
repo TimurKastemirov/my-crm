@@ -10,7 +10,6 @@ export function buildOpenApiConfig() {
         'Защищённые эндпоинты требуют Bearer access-token — нажмите «Authorize» и вставьте токен из /auth/login.',
     )
     .setVersion('1.0')
-    .addServer('/api/v1', 'API v1 (глобальный префикс)')
     .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' })
     .addTag('auth', 'Аутентификация, сессии и токены')
     .addTag('health', 'Проверки состояния сервиса (liveness / readiness)')
