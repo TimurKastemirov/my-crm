@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { RbacModule } from './modules/rbac/rbac.module.js';
 import { CompaniesModule } from './modules/companies/companies.module.js';
 import { ContactsModule } from './modules/contacts/contacts.module.js';
+import { LeadsModule } from './modules/leads/leads.module.js';
 import { validateEnv } from './config/env.validation.js';
 
 @Module({
@@ -24,6 +25,7 @@ import { validateEnv } from './config/env.validation.js';
     RbacModule,
     CompaniesModule,
     ContactsModule,
+    LeadsModule,
   ],
 })
 export class AppModule {}
