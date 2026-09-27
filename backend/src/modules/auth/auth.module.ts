@@ -8,6 +8,7 @@ import { SecurityModule } from '../security/security.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { OrganizationsModule } from '../organizations/organizations.module.js';
 import { RbacModule } from '../rbac/rbac.module.js';
+import { DealsModule } from '../deals/deals.module.js';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { RbacModule } from '../rbac/rbac.module.js';
     UsersModule,
     OrganizationsModule,
     RbacModule,
+    DealsModule,
     TypeOrmModule.forFeature([RefreshTokenEntity]),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
   ],

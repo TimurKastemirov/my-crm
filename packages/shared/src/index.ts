@@ -316,7 +316,7 @@ export interface DealDto extends BaseEntity {
   stageId: UUID;
   title: string;
   amount: string;
-  currency: string;
+  currency: string | null;
   contactId: UUID | null;
   companyId: UUID | null;
   status: DealStatus;

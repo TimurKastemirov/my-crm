@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SecurityModule } from '../security/security.module.js';
 import { RbacModule } from '../rbac/rbac.module.js';
+import { DealsModule } from '../deals/deals.module.js';
 import { LeadEntity } from './entities/lead.entity.js';
 import { ContactEntity } from '../contacts/entities/contact.entity.js';
 import { CompanyEntity } from '../companies/entities/company.entity.js';
@@ -12,6 +13,7 @@ import { LeadsController } from './leads.controller.js';
   imports: [
     SecurityModule,
     RbacModule,
+    DealsModule,
     // Contact/Company — для проверки принадлежности связей организации.
     TypeOrmModule.forFeature([LeadEntity, ContactEntity, CompanyEntity]),
   ],

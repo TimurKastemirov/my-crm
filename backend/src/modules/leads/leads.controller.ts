@@ -13,7 +13,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { PERMISSIONS, type JwtPayload, type LeadDto, type Paginated } from '@crm/shared';
+import {
+  PERMISSIONS,
+  type DealDto,
+  type JwtPayload,
+  type LeadDto,
+  type Paginated,
+} from '@crm/shared';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import { PermissionsGuard } from '../rbac/guards/permissions.guard.js';
@@ -21,6 +27,7 @@ import { RequirePermissions } from '../rbac/decorators/require-permissions.decor
 import { LeadsService } from './leads.service.js';
 import { CreateLeadDto, UpdateLeadDto } from './dto/lead.dto.js';
 import { ChangeLeadStatusDto } from './dto/change-lead-status.dto.js';
+import { ConvertLeadDto } from './dto/convert-lead.dto.js';
 import { LeadQueryDto } from './dto/lead-query.dto.js';
 
 @ApiTags('leads')
@@ -74,6 +81,20 @@ export class LeadsController {
     @Body() dto: ChangeLeadStatusDto,
   ): Promise<LeadDto> {
     return this.leads.changeStatus(user.organizationId, id, dto);
+  }
+
+  @Post(':id/convert')
+  @RequirePermissions(PERMISSIONS.LEADS_CONVERT)
+  @ApiOperation({
+    summary: 'Конвертировать лид в сделку',
+    description: 'Создаёт сделку (в дефолтной или указанной воронке) и помечает лид converted.',
+  })
+  convert(
+    @CurrentUser() user: JwtPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ConvertLeadDto,
+  ): Promise<{ lead: LeadDto; deal: DealDto }> {
+    return this.leads.convert(user.organizationId, user.sub, id, dto);
   }
 
   @Delete(':id')

@@ -5,13 +5,16 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsOrder, FindOptionsWhere, ILike, Repository } from 'typeorm';
-import { LeadStatus, type LeadDto, type Paginated } from '@crm/shared';
+import { LeadStatus, type DealDto, type LeadDto, type Paginated } from '@crm/shared';
 import { LeadEntity } from './entities/lead.entity.js';
 import { ContactEntity } from '../contacts/entities/contact.entity.js';
 import { CompanyEntity } from '../companies/entities/company.entity.js';
 import { CreateLeadDto, UpdateLeadDto } from './dto/lead.dto.js';
 import { ChangeLeadStatusDto } from './dto/change-lead-status.dto.js';
+import { ConvertLeadDto } from './dto/convert-lead.dto.js';
 import { LeadQueryDto } from './dto/lead-query.dto.js';
+import { DealsService } from '../deals/deals.service.js';
+import { PipelinesService } from '../deals/pipelines.service.js';
 import {
   normalizePagination,
   resolveSort,
@@ -29,6 +32,8 @@ export class LeadsService {
     private readonly contactRepo: Repository<ContactEntity>,
     @InjectRepository(CompanyEntity)
     private readonly companyRepo: Repository<CompanyEntity>,
+    private readonly dealsService: DealsService,
+    private readonly pipelinesService: PipelinesService,
   ) {}
 
   async list(organizationId: string, query: LeadQueryDto): Promise<Paginated<LeadDto>> {
@@ -113,6 +118,44 @@ export class LeadsService {
   async remove(organizationId: string, id: string): Promise<void> {
     await this.mustFind(organizationId, id);
     await this.repo.softDelete({ id });
+  }
+
+  /** Конвертация лида в сделку: создаёт сделку и помечает лид converted. */
+  async convert(
+    organizationId: string,
+    ownerId: string,
+    id: string,
+    dto: ConvertLeadDto,
+  ): Promise<{ lead: LeadDto; deal: DealDto }> {
+    const lead = await this.mustFind(organizationId, id);
+    if (lead.status === LeadStatus.Converted) {
+      throw new BadRequestException('Лид уже конвертирован');
+    }
+    if (lead.status === LeadStatus.Lost) {
+      throw new BadRequestException('Проигранный лид нельзя конвертировать');
+    }
+
+    const target =
+      dto.pipelineId && dto.stageId
+        ? { pipelineId: dto.pipelineId, stageId: dto.stageId }
+        : await this.pipelinesService.defaultTarget(organizationId);
+
+    const deal = await this.dealsService.create(organizationId, ownerId, {
+      pipelineId: target.pipelineId,
+      stageId: target.stageId,
+      title: dto.title,
+      amount: dto.amount ?? lead.estimatedValue ?? undefined,
+      currency: lead.currency ?? undefined,
+      contactId: lead.contactId ?? undefined,
+      companyId: lead.companyId ?? undefined,
+    });
+
+    lead.status = LeadStatus.Converted;
+    lead.convertedDealId = deal.id;
+    lead.lostReason = null;
+    await this.repo.save(lead);
+
+    return { lead: this.toDto(lead), deal };
   }
 
   private async assertLinks(

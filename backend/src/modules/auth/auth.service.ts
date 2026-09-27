@@ -24,6 +24,7 @@ import { RefreshTokenEntity } from './entities/refresh-token.entity.js';
 import { UsersService } from '../users/users.service.js';
 import { OrganizationsService } from '../organizations/organizations.service.js';
 import { RolesService } from '../rbac/roles.service.js';
+import { PipelinesService } from '../deals/pipelines.service.js';
 import { parseDurationToMs } from './auth.util.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
@@ -41,6 +42,7 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly rolesService: RolesService,
+    private readonly pipelinesService: PipelinesService,
     @InjectRepository(RefreshTokenEntity)
     private readonly refreshRepo: Repository<RefreshTokenEntity>,
   ) {}
@@ -88,6 +90,8 @@ export class AuthService {
 
         // Системные роли организации + назначение владельца (в той же транзакции).
         await this.rolesService.provisionOrganization(manager, org.id, createdUser.id);
+        // Дефолтная воронка продаж со стадиями.
+        await this.pipelinesService.provisionDefault(manager, org.id);
 
         return { user: createdUser, organizationId: org.id };
       },
