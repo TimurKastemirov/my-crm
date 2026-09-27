@@ -22,6 +22,6 @@ import { RolesController } from './roles.controller.js';
   ],
   controllers: [RolesController],
   providers: [PermissionsService, RolesService, PermissionsGuard],
-  exports: [RolesService],
+  exports: [RolesService, PermissionsGuard],
 })
 export class RbacModule {}
