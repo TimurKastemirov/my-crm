@@ -9,6 +9,11 @@
     "backend",
     "frontend"
   ],
+  "//": "class-validator/transformer подняты в корень: @nestjs/common тоже в корне и резолвит их через loadPackage (иначе ValidationPipe не находит их в hoisted-workspace).",
+  "dependencies": {
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1"
+  },
   "scripts": {
     "build:shared": "npm run build -w @crm/shared",
     "build:backend": "npm run build:shared && npm run build -w backend",

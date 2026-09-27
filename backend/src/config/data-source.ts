@@ -15,7 +15,8 @@ const isTs = import.meta.url.endsWith('.ts');
 const root = isTs ? 'src' : 'dist';
 const ext = isTs ? 'ts' : 'js';
 
-export const AppDataSource = new DataSource({
+// TypeORM CLI требует РОВНО один экспорт DataSource — только default.
+const dataSource = new DataSource({
   type: 'postgres',
   host: process.env.POSTGRES_HOST ?? 'localhost',
   port: Number(process.env.POSTGRES_PORT ?? 5432),
@@ -28,4 +29,4 @@ export const AppDataSource = new DataSource({
   migrations: [`${root}/migrations/*.${ext}`],
 });
 
-export default AppDataSource;
+export default dataSource;
