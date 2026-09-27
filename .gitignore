@@ -6,6 +6,9 @@ dist/
 build/
 *.tsbuildinfo
 
+# Сгенерированная OpenAPI-спека
+openapi.json
+
 # Окружение и секреты
 .env
 .env.*

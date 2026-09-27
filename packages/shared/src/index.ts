@@ -219,6 +219,18 @@ export interface JwtPayload {
   email: string;
 }
 
+/** Результат register/login/refresh. */
+export interface AuthResult {
+  user: UserDto;
+  tokens: AuthTokens;
+}
+
+/** Текущая сессия: GET /auth/me. */
+export interface SessionInfo {
+  user: UserDto;
+  organizationId: UUID;
+}
+
 /* ============================ Модели домена ============================ */
 // numeric-поля (деньги) передаём строкой, чтобы не терять точность в JS number.
 

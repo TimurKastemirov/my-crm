@@ -4,6 +4,7 @@ import { RedisModule } from './config/redis/redis.module.js';
 import { PostgresModule } from './config/postgres/postgres.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { ReadinessModule } from './modules/health/readiness.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 import { validateEnv } from './config/env.validation.js';
 
 @Module({
@@ -16,6 +17,7 @@ import { validateEnv } from './config/env.validation.js';
     RedisModule,
     HealthModule,
     ReadinessModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
