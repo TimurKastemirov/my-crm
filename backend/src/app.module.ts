@@ -10,6 +10,7 @@ import { CompaniesModule } from './modules/companies/companies.module.js';
 import { ContactsModule } from './modules/contacts/contacts.module.js';
 import { LeadsModule } from './modules/leads/leads.module.js';
 import { DealsModule } from './modules/deals/deals.module.js';
+import { TasksModule } from './modules/tasks/tasks.module.js';
 import { validateEnv } from './config/env.validation.js';
 
 @Module({
@@ -28,6 +29,7 @@ import { validateEnv } from './config/env.validation.js';
     ContactsModule,
     LeadsModule,
     DealsModule,
+    TasksModule,
   ],
 })
 export class AppModule {}
