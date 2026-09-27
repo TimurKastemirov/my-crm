@@ -21,7 +21,7 @@ export const routes: Routes = [
       { path: 'contacts', loadComponent: () => import('./features/contacts/contacts-page').then((m) => m.ContactsPageComponent) },
       { path: 'companies', loadComponent: () => import('./features/companies/companies-page').then((m) => m.CompaniesPageComponent) },
       { path: 'leads', loadComponent: () => import('./features/leads/leads-page').then((m) => m.LeadsPageComponent) },
-      { path: 'deals', loadComponent: () => import('./features/placeholder/placeholder').then((m) => m.PlaceholderComponent) },
+      { path: 'deals', loadComponent: () => import('./features/deals/deals-board').then((m) => m.DealsBoardComponent) },
       { path: 'tasks', loadComponent: () => import('./features/tasks/tasks-page').then((m) => m.TasksPageComponent) },
     ],
   },

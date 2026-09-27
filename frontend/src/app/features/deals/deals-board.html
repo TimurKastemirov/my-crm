@@ -1,0 +1,93 @@
+<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  <div>
+    <h1 class="text-xl font-semibold text-slate-900">Сделки</h1>
+    @if (vm.pipeline()) { <p class="text-sm text-slate-400">Воронка: {{ vm.pipeline()!.name }}</p> }
+  </div>
+  <button type="button" (click)="vm.openCreate()" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-500">
+    + Сделка
+  </button>
+</div>
+
+@if (vm.error()) {
+  <div class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ vm.error() }}</div>
+}
+
+@if (vm.loading()) {
+  <p class="mt-6 text-sm text-slate-400">Загрузка…</p>
+} @else if (vm.columns().length === 0) {
+  <div class="mt-6 rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-400">
+    Нет воронки или этапов
+  </div>
+} @else {
+  <div cdkDropListGroup class="mt-4 flex gap-3 overflow-x-auto pb-3">
+    @for (col of vm.columns(); track col.stage.id) {
+      <div class="flex w-72 shrink-0 flex-col rounded-xl bg-slate-100 p-2">
+        <div class="flex items-center justify-between px-2 py-1">
+          <span class="text-sm font-semibold text-slate-700">{{ col.stage.name }}</span>
+          <span class="text-xs text-slate-400">{{ col.deals.length }}</span>
+        </div>
+        <div
+          cdkDropList
+          [cdkDropListData]="col"
+          (cdkDropListDropped)="vm.drop($event)"
+          class="flex min-h-24 flex-col gap-2 p-1"
+        >
+          @for (deal of col.deals; track deal.id) {
+            <div cdkDrag class="cursor-grab rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200 active:cursor-grabbing">
+              <div class="flex items-start justify-between gap-2">
+                <span class="text-sm font-medium text-slate-900">{{ deal.title }}</span>
+                @if (vm.isWon(deal)) {
+                  <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">Выиграна</span>
+                } @else if (vm.isLost(deal)) {
+                  <span class="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700">Проиграна</span>
+                }
+              </div>
+              @if (deal.amount) {
+                <div class="mt-1 text-sm text-slate-500">{{ deal.amount }} {{ deal.currency }}</div>
+              }
+              <button
+                type="button"
+                (click)="vm.remove(deal)"
+                class="mt-2 text-xs text-red-500 hover:underline"
+              >Удалить</button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+}
+
+<app-modal [open]="vm.modalOpen()" title="Новая сделка" (close)="vm.modalOpen.set(false)">
+  <form [formGroup]="vm.form" (ngSubmit)="vm.save()">
+    <label class="block text-sm font-medium text-slate-700">
+      Название
+      <input formControlName="title" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+    </label>
+    <div class="mt-3 grid grid-cols-2 gap-3">
+      <label class="block text-sm font-medium text-slate-700">
+        Сумма
+        <input formControlName="amount" inputmode="decimal" placeholder="0.00" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+      </label>
+      <label class="block text-sm font-medium text-slate-700">
+        Валюта
+        <input formControlName="currency" maxlength="3" placeholder="USD" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm uppercase outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+      </label>
+    </div>
+    <label class="mt-3 block text-sm font-medium text-slate-700">
+      Этап
+      <select formControlName="stageId" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500">
+        @for (col of vm.columns(); track col.stage.id) {
+          <option [value]="col.stage.id">{{ col.stage.name }}</option>
+        }
+      </select>
+    </label>
+
+    <div class="mt-5 flex gap-2">
+      <button type="submit" [disabled]="vm.saving()" class="flex-1 rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60">
+        {{ vm.saving() ? 'Создаём…' : 'Создать' }}
+      </button>
+      <button type="button" (click)="vm.modalOpen.set(false)" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-600">Отмена</button>
+    </div>
+  </form>
+</app-modal>
