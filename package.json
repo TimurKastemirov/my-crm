@@ -1,0 +1,27 @@
+{
+  "name": "my-crm",
+  "version": "0.0.0",
+  "description": "Мультиарендная B2B sales CRM (NestJS + Angular). Монорепо на npm workspaces.",
+  "private": true,
+  "packageManager": "npm@12.1.0",
+  "workspaces": [
+    "packages/*",
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "build:shared": "npm run build -w @crm/shared",
+    "build:backend": "npm run build:shared && npm run build -w backend",
+    "build:frontend": "npm run build:shared && npm run build -w frontend",
+    "build": "npm run build:shared && npm run build -w backend && npm run build -w frontend",
+    "dev:shared": "npm run dev -w @crm/shared",
+    "dev:backend": "npm run start:dev -w backend",
+    "dev:frontend": "npm run start -w frontend",
+    "lint": "npm run lint -w backend",
+    "test:backend": "npm run test -w backend",
+    "test:frontend": "npm run test -w frontend",
+    "test": "npm run test:backend && npm run test:frontend",
+    "up": "docker compose up --build",
+    "down": "docker compose down"
+  }
+}

@@ -1,0 +1,22 @@
+# Зависимости
+node_modules/
+
+# Сборка
+dist/
+build/
+*.tsbuildinfo
+
+# Окружение и секреты
+.env
+.env.*
+!.env.example
+
+# Тесты/покрытие
+coverage/
+
+# ОС / IDE
+.DS_Store
+.idea/
+*.log
+
+specification.md

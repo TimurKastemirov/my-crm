@@ -1,0 +1,27 @@
+# Зависимости и сборки (ставятся/собираются внутри образа)
+node_modules
+**/node_modules
+dist
+**/dist
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# VCS / IDE / ОС
+.git
+.gitignore
+.idea
+.DS_Store
+
+# Секреты и логи
+.env
+**/.env
+*.local
+*.log
+coverage
+**/coverage
+
+# Не нужно в контексте образа
+.github
+docker-compose*.yml
+**/Dockerfile
+*.md
