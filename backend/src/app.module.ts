@@ -5,6 +5,7 @@ import { PostgresModule } from './config/postgres/postgres.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { ReadinessModule } from './modules/health/readiness.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { RbacModule } from './modules/rbac/rbac.module.js';
 import { validateEnv } from './config/env.validation.js';
 
 @Module({
@@ -18,6 +19,7 @@ import { validateEnv } from './config/env.validation.js';
     HealthModule,
     ReadinessModule,
     AuthModule,
+    RbacModule,
   ],
 })
 export class AppModule {}
