@@ -249,6 +249,15 @@ export interface UserDto extends BaseEntity {
   isActive: boolean;
 }
 
+/** UI languages the product supports; stored per-user as `UserDto.locale`. */
+export const SUPPORTED_LOCALES = ['en', 'ru', 'uk'] as const;
+export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
+
+/** PATCH /users/me — update the current user's settings. */
+export interface UpdateProfileRequest {
+  locale?: AppLocale;
+}
+
 export interface RoleDto extends BaseEntity {
   organizationId: UUID;
   name: string;
