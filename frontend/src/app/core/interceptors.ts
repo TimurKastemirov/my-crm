@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
+import { AuthService } from './auth.service';
 import { TokenStorage } from './token-storage';
 
 /** Добавляет Bearer access-token к запросам к API. */
@@ -13,10 +13,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req);
 };
 
-/** На 401 (кроме самих auth-запросов) чистит сессию и уводит на /login. */
+/** На 401 (кроме самих auth-запросов) завершает сессию и уводит на /login. */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-  const tokens = inject(TokenStorage);
-  const router = inject(Router);
+  const auth = inject(AuthService);
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       const isAuthCall =
@@ -24,8 +23,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         req.url.includes('/auth/register') ||
         req.url.includes('/auth/refresh');
       if (error.status === 401 && !isAuthCall) {
-        tokens.clear();
-        void router.navigate(['/login']);
+        auth.handleUnauthorized();
       }
       return throwError(() => error);
     }),
