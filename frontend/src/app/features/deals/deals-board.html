@@ -19,7 +19,7 @@
     Нет воронки или этапов
   </div>
 } @else {
-  <div cdkDropListGroup class="mt-4 flex gap-3 overflow-x-auto pb-3">
+  <div cdkDropListGroup class="mt-4 flex min-h-0 flex-1 gap-3 overflow-auto pb-3">
     @for (col of vm.columns(); track col.stage.id) {
       <div class="flex w-72 shrink-0 flex-col rounded-xl bg-slate-100 p-2">
         <div class="flex items-center justify-between px-2 py-1">
@@ -60,23 +60,23 @@
 
 <app-modal [open]="vm.modalOpen()" title="Новая сделка" (close)="vm.modalOpen.set(false)">
   <form [formGroup]="vm.form" (ngSubmit)="vm.save()">
-    <label class="block text-sm font-medium text-slate-700">
+    <label for="deal-title" class="block text-sm font-medium text-slate-700">
       Название
-      <input formControlName="title" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+      <input id="deal-title" name="title" formControlName="title" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
     </label>
     <div class="mt-3 grid grid-cols-2 gap-3">
-      <label class="block text-sm font-medium text-slate-700">
+      <label for="deal-amount" class="block text-sm font-medium text-slate-700">
         Сумма
-        <input formControlName="amount" inputmode="decimal" placeholder="0.00" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+        <input id="deal-amount" name="amount" formControlName="amount" inputmode="decimal" placeholder="0.00" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
       </label>
-      <label class="block text-sm font-medium text-slate-700">
+      <label for="deal-currency" class="block text-sm font-medium text-slate-700">
         Валюта
-        <input formControlName="currency" maxlength="3" placeholder="USD" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm uppercase outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+        <input id="deal-currency" name="currency" formControlName="currency" maxlength="3" placeholder="USD" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm uppercase outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
       </label>
     </div>
-    <label class="mt-3 block text-sm font-medium text-slate-700">
+    <label for="deal-stage" class="mt-3 block text-sm font-medium text-slate-700">
       Этап
-      <select formControlName="stageId" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500">
+      <select id="deal-stage" name="stageId" formControlName="stageId" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500">
         @for (col of vm.columns(); track col.stage.id) {
           <option [value]="col.stage.id">{{ col.stage.name }}</option>
         }

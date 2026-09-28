@@ -7,6 +7,7 @@ import { TasksPageComponentService } from './tasks-page.service';
 
 @Component({
   selector: 'app-tasks-page',
+  host: { class: 'block h-full' },
   imports: [ReactiveFormsModule, DatePipe, ModalComponent, PaginatorComponent],
   templateUrl: './tasks-page.html',
   providers: [TasksPageComponentService],

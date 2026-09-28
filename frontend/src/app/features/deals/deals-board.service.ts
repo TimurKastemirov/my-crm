@@ -52,7 +52,7 @@ export class DealsBoardComponentService {
         return;
       }
       const stages = [...pipeline.stages].sort((a, b) => a.position - b.position);
-      const deals = await this.api.list({ pipelineId: pipeline.id, limit: 200 });
+      const deals = await this.api.list({ pipelineId: pipeline.id, limit: 100 });
       this.columns.set(
         stages.map((stage) => ({
           stage,

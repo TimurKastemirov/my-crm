@@ -6,6 +6,7 @@ import { DealsBoardComponentService } from './deals-board.service';
 
 @Component({
   selector: 'app-deals-board',
+  host: { class: 'flex h-full flex-col' },
   imports: [ReactiveFormsModule, CdkDropListGroup, CdkDropList, CdkDrag, ModalComponent],
   templateUrl: './deals-board.html',
   providers: [DealsBoardComponentService],

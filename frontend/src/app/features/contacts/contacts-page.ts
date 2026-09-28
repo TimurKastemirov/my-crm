@@ -6,6 +6,7 @@ import { ContactsPageComponentService } from './contacts-page.service';
 
 @Component({
   selector: 'app-contacts-page',
+  host: { class: 'block h-full' },
   imports: [ReactiveFormsModule, ModalComponent, PaginatorComponent],
   templateUrl: './contacts-page.html',
   providers: [ContactsPageComponentService],

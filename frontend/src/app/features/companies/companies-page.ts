@@ -6,6 +6,7 @@ import { CompaniesPageComponentService } from './companies-page.service';
 
 @Component({
   selector: 'app-companies-page',
+  host: { class: 'block h-full' },
   imports: [ReactiveFormsModule, ModalComponent, PaginatorComponent],
   templateUrl: './companies-page.html',
   providers: [CompaniesPageComponentService],

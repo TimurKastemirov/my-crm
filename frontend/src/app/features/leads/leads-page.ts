@@ -6,6 +6,7 @@ import { LeadsPageComponentService } from './leads-page.service';
 
 @Component({
   selector: 'app-leads-page',
+  host: { class: 'block h-full' },
   imports: [ReactiveFormsModule, ModalComponent, PaginatorComponent],
   templateUrl: './leads-page.html',
   providers: [LeadsPageComponentService],

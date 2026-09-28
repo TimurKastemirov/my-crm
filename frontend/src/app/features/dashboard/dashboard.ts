@@ -3,6 +3,7 @@ import { DashboardComponentService } from './dashboard.service';
 
 @Component({
   selector: 'app-dashboard',
+  host: { class: 'block h-full' },
   templateUrl: './dashboard.html',
   providers: [DashboardComponentService],
 })

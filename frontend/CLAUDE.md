@@ -67,3 +67,10 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - `XxxComponentService` injects the API services (`ApiClient` / domain `*Api`) for backend calls.
 - The component stays thin: `protected readonly vm = inject(XxxComponentService)`, and the template reads `vm.*`.
 - Purely presentational components without logic (modal, paginator) don't need a service.
+
+## Forms (required in this project)
+
+- **Every form control (`input`, `select`, `textarea`) MUST have both an `id` and a `name` attribute.** This is required for accessibility (explicit label association), browser autofill/password managers, and stable end-to-end/test selectors.
+  - `id` must be unique in the rendered page. For controls emitted inside an `@for` loop, bind it to the row: `[id]="'lead-status-' + c.id"`.
+  - `name` mirrors the field: for reactive-form controls use the `formControlName` value; for filter/search controls use a short semantic name (`search`, `statusFilter`).
+- **Associate the label:** either give the visible `<label>` a `for="<id>"`, or (for label-less search/filter/row controls) add an `aria-label`. A control must never rely on `placeholder` alone for its accessible name.
