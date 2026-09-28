@@ -1,79 +1,82 @@
 ---
 name: commit
 description: >-
-  Создаёт качественный git-коммит для текущих изменений: разбирается, ЧТО и ЗАЧЕМ
-  изменилось, и пишет внятное сообщение (imperative-заголовок + тело «что и почему»).
-  Используй ВСЕГДА, когда пользователь просит закоммитить/зафиксировать изменения —
-  «закоммить», «сделай коммит», «commit», «commit this», «зафиксируй», — даже если
-  формат сообщения не уточнён. Репозиторий — монорепо (npm workspaces): backend
+  Creates a high-quality git commit for the current changes: works out WHAT
+  changed and WHY, and writes a clear message (imperative subject + a "what and
+  why" body). ALWAYS use it when the user asks to commit changes — "commit",
+  "commit this", "закоммить", "сделай коммит", "зафиксируй" — even if the message
+  format is not specified. The repo is a monorepo (npm workspaces): backend
   (NestJS), frontend (Angular), packages/shared.
 ---
 
-# Commit — качественный git-коммит
+# Commit — a high-quality git commit
 
-Цель: такой коммит, чтобы через полгода из `git log` было понятно **что** изменилось
-и **зачем**, не читая дифф целиком. Дифф показывает «что», но почти никогда — «почему»;
-именно «почему» и есть главная ценность сообщения.
+Goal: a commit such that six months later `git log` makes it clear **what**
+changed and **why**, without reading the whole diff. The diff shows the "what",
+but almost never the "why" — and the "why" is the main value of the message.
 
-## Процесс
+## Process
 
-### 1. Понять изменения (не коммить вслепую)
-- `git status` — что затронуто.
-- `git diff` и `git diff --staged` — фактические изменения по существу.
-- `git log --oneline -10` — перенять стиль и **язык** существующих сообщений репозитория.
+### 1. Understand the changes (don't commit blind)
+- `git status` — what is affected.
+- `git diff` and `git diff --staged` — the actual substantive changes.
+- `git log --oneline -10` — adopt the style and **language** of the repo's existing messages.
 
-Определи, какие части монорепо затронуты (`backend`, `frontend`, `shared`, `docker`, `ci`,
-корень репозитория) — это станет `scope`.
+Determine which parts of the monorepo are touched (`backend`, `frontend`, `shared`,
+`docker`, `ci`, repo root) — that becomes the `scope`.
 
-### 2. Решить, что попадёт в коммит
-- Если индекс пуст — добавь релевантное: `git add -A`, либо выборочно (`git add <путь>`),
-  если в рабочем дереве смешаны несвязанные изменения.
-- Перепроверь по `git status`, что не коммитятся секреты и артефакты (`.env`, `node_modules`,
-  `dist`) — они в `.gitignore`, но убедись.
-- Если изменения логически разнородны — предложи разбить на несколько коммитов, каждый
-  с одним смыслом. Один осмысленный коммит > одна свалка.
+### 2. Decide what goes into the commit
+- If the index is empty, add what's relevant: `git add -A`, or selectively
+  (`git add <path>`) if the working tree mixes unrelated changes.
+- Re-check with `git status` that no secrets or artifacts are committed (`.env`,
+  `node_modules`, `dist`) — they're in `.gitignore`, but make sure.
+- If the changes are logically heterogeneous, propose splitting them into several
+  commits, each with a single meaning. One meaningful commit > one dump.
 
-### 3. Сформулировать «что» и «зачем»
-Сообщение должно отвечать на два вопроса:
-- **Что** сделано — по сути, а не построчный пересказ диффа.
-- **Зачем** — какую задачу/проблему решаем, какой ожидаемый эффект. Если непонятно зачем —
-  посмотри контекст (связанный код, ТЗ `specification.md`), а не выдумывай.
+### 3. Formulate the "what" and the "why"
+The message must answer two questions:
+- **What** was done — in substance, not a line-by-line retelling of the diff.
+- **Why** — what task/problem is being solved and the expected effect. If the "why"
+  is unclear, look at the context (related code, the `specification.md` spec) rather
+  than inventing it.
 
-### 4. Формат сообщения (Conventional Commits)
-- **Заголовок:** `type(scope): краткое действие` в повелительном наклонении, ≤ ~72 символов,
-  без точки в конце.
+### 4. Message format (Conventional Commits)
+- **Subject:** `type(scope): short action` in the imperative mood, ≤ ~72 chars,
+  no trailing period.
   - `type`: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `build`, `ci`, `perf`, `style`.
-  - `scope`: область монорепо (`backend`, `frontend`, `shared`, `docker`, `ci`, `repo`) или
-    уже — доменный модуль (`auth`, `deals`, `health`…).
-- Пустая строка.
-- **Тело:** 1–5 пунктов «что изменили», затем короткая фраза/пункт «Зачем: …». Строки ~72–100 символов.
-- **Язык** — как в репозитории (здесь допустим русский; сверься с `git log`).
-- **Не добавляй строки атрибуции/соавторства** (`Co-Authored-By`, «Generated with…»):
-  по требованию владельца репозитория коммиты идут без них.
+  - `scope`: a monorepo area (`backend`, `frontend`, `shared`, `docker`, `ci`, `repo`)
+    or, more narrowly, a domain module (`auth`, `deals`, `health`…).
+- A blank line.
+- **Body:** 1–5 bullets of "what changed", then a short "Why: …" phrase/bullet. Lines ~72–100 chars.
+- **Language** — match the repository (commit messages here are currently in Russian;
+  check `git log`). This skill's own text is in English, but the commit messages you
+  write follow the repo's existing language.
+- **Do NOT add attribution/co-authorship lines** (`Co-Authored-By`, "Generated with…"):
+  by the repo owner's requirement, commits go without them.
 
-### 5. Закоммитить и отчитаться
-- Пиши многострочное сообщение во временный файл и коммить через `git commit -F <файл>` —
-  это надёжнее `-m` с телом и не ломается на кавычках, `$` и переносах строк.
-- После коммита покажи `git log --oneline -1` и итоговое сообщение.
-- Если сработал pre-commit хук и изменил файлы — до-стейдж изменённое и `git commit --amend --no-edit`.
-- Если текущая ветка — дефолтная (`main`/`master`) и в проекте приняты PR-ветки, предупреди
-  об этом. В этом репозитории коммиты в `main` — нормальный поток.
-- **Не делай `git push`** — только коммит, если пользователь явно не попросил запушить.
+### 5. Commit and report
+- Write a multi-line message to a temp file and commit via `git commit -F <file>` —
+  it's more reliable than `-m` with a body and doesn't break on quotes, `$`, or newlines.
+- After committing, show `git log --oneline -1` and the final message.
+- If a pre-commit hook ran and modified files, re-stage the changes and `git commit --amend --no-edit`.
+- If the current branch is the default one (`main`/`master`) and the project uses PR
+  branches, warn about it. In this repo, commits to `main` are the normal flow.
+- **Do not `git push`** — commit only, unless the user explicitly asks to push.
 
-## Шаблон
+## Template
 
 ```
-type(scope): краткое действие в повелительном наклонении
+type(scope): short action in the imperative mood
 
-- что изменили (пункт 1)
-- что изменили (пункт 2)
+- what changed (bullet 1)
+- what changed (bullet 2)
 
-Зачем: одна-две фразы о причине/проблеме и ожидаемом эффекте.
+Why: one or two sentences about the reason/problem and the expected effect.
 ```
 
-## Примеры
+## Examples
 
-**Пример 1 — фича в backend.** Добавлены JWT-модуль, argon2, ротация refresh-токенов:
+**Example 1 — a backend feature.** Added a JWT module, argon2, refresh-token rotation:
 ```
 feat(auth): добавить JWT-аутентификацию с ротацией refresh-токенов
 
@@ -85,7 +88,7 @@ feat(auth): добавить JWT-аутентификацию с ротацие�
 пользователя остальные защищённые модули не имеют смысла.
 ```
 
-**Пример 2 — инфраструктура:**
+**Example 2 — infrastructure:**
 ```
 build(docker): добавить multi-stage сборку и docker-compose
 
@@ -97,13 +100,15 @@ build(docker): добавить multi-stage сборку и docker-compose
 воспроизводимая прод-сборка образов.
 ```
 
-**Пример 3 — заголовок: плохо vs хорошо:**
-- ❌ `изменения`, `fix bug`, `update files` — не говорят ни что, ни зачем.
+(The example bodies stay in Russian on purpose — they show the repo's current commit language.)
+
+**Example 3 — subject: bad vs good:**
+- ❌ `изменения`, `fix bug`, `update files` — say neither what nor why.
 - ✅ `fix(deals): не терять stage при перетаскивании между воронками`.
 
-## Антипаттерны
-- Построчный пересказ диффа вместо смысла изменения.
-- «WIP», «фиксы», «мелочи», «правки» — без содержания.
-- Один огромный коммит на несвязанные изменения.
-- Коммит секретов или сгенерированных артефактов.
-- Выдуманное «зачем», не подтверждённое контекстом.
+## Anti-patterns
+- A line-by-line retelling of the diff instead of the meaning of the change.
+- "WIP", "фиксы", "мелочи", "правки" — content-free.
+- One huge commit for unrelated changes.
+- Committing secrets or generated artifacts.
+- An invented "why" not supported by the context.

@@ -1,5 +1,13 @@
 You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
 
+## Language
+
+- **Everything is written in English** — code, identifiers, comments, all UI text, and all API responses. Do not introduce Russian into code or product text.
+- Comments: `//`, `/* */`, JSDoc and HTML `<!-- -->` — English.
+- UI: visible text, button labels, `placeholder`, `aria-label`, `<option>` text, empty/loading/error states — English.
+- API (backend): exception/validation messages returned to clients and Swagger docs — English; seeded default display names (system roles, default pipeline & stages) — English.
+- Not affected: real user-entered data (sample/demo records) stays as typed; commit messages follow the repo's existing convention (see `git log`). Repo-wide conventions live in the root `AGENTS.md`.
+
 ## TypeScript Best Practices
 
 - Use strict type checking
