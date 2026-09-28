@@ -1,23 +1,18 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 import { LeadStatus, type LeadDto } from '@crm/shared';
+import { LocaleService } from '../../core/locale.service';
 import { extractErrorMessage } from '../../core/http-error';
 import { LeadsApi } from './leads.api';
-
-const STATUS_LABELS: Record<LeadStatus, string> = {
-  new: 'New',
-  contacted: 'Contacted',
-  qualified: 'Qualified',
-  converted: 'Converted',
-  lost: 'Lost',
-};
 
 @Injectable()
 export class LeadsPageComponentService {
   private readonly api = inject(LeadsApi);
   private readonly fb = inject(FormBuilder);
+  private readonly translate = inject(TranslateService);
 
-  readonly statusLabels = STATUS_LABELS;
+  readonly locale = inject(LocaleService).locale;
 
   readonly items = signal<LeadDto[]>([]);
   readonly total = signal(0);
@@ -56,7 +51,7 @@ export class LeadsPageComponentService {
       this.total.set(res.meta.total);
       this.hasNext.set(res.meta.hasNext);
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to load leads'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('leads.loadError')));
     } finally {
       this.loading.set(false);
     }
@@ -118,7 +113,7 @@ export class LeadsPageComponentService {
       this.modalOpen.set(false);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to save'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('leads.saveError')));
     } finally {
       this.saving.set(false);
     }
@@ -130,7 +125,7 @@ export class LeadsPageComponentService {
     if (next === lead.status) return;
     let lostReason: string | undefined;
     if (next === LeadStatus.Lost) {
-      lostReason = window.prompt('Reason for the loss?')?.trim() || undefined;
+      lostReason = window.prompt(this.translate.instant('leads.lossReasonPrompt'))?.trim() || undefined;
       if (!lostReason) return;
     }
     this.error.set(null);
@@ -138,30 +133,30 @@ export class LeadsPageComponentService {
       await this.api.changeStatus(lead.id, next, lostReason);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to change status'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('leads.statusChangeError')));
     }
   }
 
   async convert(lead: LeadDto): Promise<void> {
-    const title = window.prompt('Deal title:', `Deal from lead`)?.trim();
+    const title = window.prompt(this.translate.instant('leads.dealTitlePrompt'), this.translate.instant('leads.dealTitleDefault'))?.trim();
     if (!title) return;
     this.error.set(null);
     try {
       await this.api.convert(lead.id, title);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to convert'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('leads.convertError')));
     }
   }
 
   async remove(lead: LeadDto): Promise<void> {
-    if (!window.confirm('Delete lead?')) return;
+    if (!window.confirm(this.translate.instant('leads.deleteConfirm'))) return;
     this.error.set(null);
     try {
       await this.api.remove(lead.id);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to delete'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('leads.deleteError')));
     }
   }
 }

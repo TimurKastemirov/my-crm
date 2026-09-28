@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import type { CompanyDto } from '@crm/shared';
+import { TranslateService } from '@ngx-translate/core';
 import { extractErrorMessage } from '../../core/http-error';
 import { CompaniesApi } from './companies.api';
 
@@ -8,6 +9,7 @@ import { CompaniesApi } from './companies.api';
 export class CompaniesPageComponentService {
   private readonly api = inject(CompaniesApi);
   private readonly fb = inject(FormBuilder);
+  private readonly translate = inject(TranslateService);
 
   readonly items = signal<CompanyDto[]>([]);
   readonly total = signal(0);
@@ -41,7 +43,7 @@ export class CompaniesPageComponentService {
       this.total.set(res.meta.total);
       this.hasNext.set(res.meta.hasNext);
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to load companies'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('companies.loadError')));
     } finally {
       this.loading.set(false);
     }
@@ -99,20 +101,20 @@ export class CompaniesPageComponentService {
       this.modalOpen.set(false);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to save'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('companies.saveError')));
     } finally {
       this.saving.set(false);
     }
   }
 
   async remove(c: CompanyDto): Promise<void> {
-    if (!confirm(`Delete company "${c.name}"?`)) return;
+    if (!confirm(this.translate.instant('companies.deleteConfirm', { name: c.name }))) return;
     this.error.set(null);
     try {
       await this.api.remove(c.id);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to delete'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('companies.deleteError')));
     }
   }
 }

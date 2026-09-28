@@ -1,8 +1,8 @@
 <div class="flex h-full flex-col">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    <h1 class="text-xl font-semibold text-slate-900">Leads</h1>
+    <h1 class="text-xl font-semibold text-slate-900">{{ 'leads.title' | translate }}</h1>
     <button type="button" (click)="vm.openCreate()" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-500">
-      + Lead
+      {{ 'leads.add' | translate }}
     </button>
   </div>
 
@@ -11,24 +11,24 @@
       #box
       id="leads-search"
       name="search"
-      aria-label="Search leads by source"
+      [attr.aria-label]="'leads.searchAria' | translate"
       (keyup.enter)="vm.applySearch(box.value)"
-      placeholder="Search by source + Enter…"
+      [attr.placeholder]="'leads.searchPlaceholder' | translate"
       class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
     />
     <select
       id="leads-status-filter"
       name="statusFilter"
-      aria-label="Filter by status"
+      [attr.aria-label]="'leads.statusFilterAria' | translate"
       (change)="vm.filterByStatus($any($event.target).value)"
       class="rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 sm:w-48"
     >
-      <option value="">All statuses</option>
-      <option value="new">New</option>
-      <option value="contacted">Contacted</option>
-      <option value="qualified">Qualified</option>
-      <option value="converted">Converted</option>
-      <option value="lost">Lost</option>
+      <option value="">{{ 'common.allStatuses' | translate }}</option>
+      <option value="new">{{ 'leadStatus.new' | translate }}</option>
+      <option value="contacted">{{ 'leadStatus.contacted' | translate }}</option>
+      <option value="qualified">{{ 'leadStatus.qualified' | translate }}</option>
+      <option value="converted">{{ 'leadStatus.converted' | translate }}</option>
+      <option value="lost">{{ 'leadStatus.lost' | translate }}</option>
     </select>
   </div>
 
@@ -37,48 +37,48 @@
   }
 
   @if (vm.loading()) {
-    <p class="mt-4 flex min-h-0 flex-1 items-center justify-center text-sm text-slate-400">Loading…</p>
+    <p class="mt-4 flex min-h-0 flex-1 items-center justify-center text-sm text-slate-400">{{ 'common.loading' | translate }}</p>
   } @else if (vm.items().length === 0) {
     <div class="mt-4 flex min-h-0 flex-1 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-400">
-      No leads yet
+      {{ 'leads.empty' | translate }}
     </div>
   } @else {
     <div class="mt-4 grid min-h-0 flex-1 grid-cols-1 content-start gap-3 overflow-auto md:grid-cols-2 lg:grid-cols-3">
       @for (c of vm.items(); track c.id) {
         <div class="flex flex-col rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
           <div class="flex items-center justify-between gap-2">
-            <span class="font-medium text-slate-900">{{ c.source || 'No source' }}</span>
-            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{{ vm.statusLabels[c.status] }}</span>
+            <span class="font-medium text-slate-900">{{ c.source || ('leads.noSource' | translate) }}</span>
+            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{{ ('leadStatus.' + c.status) | translate }}</span>
           </div>
           @if (c.estimatedValue) {
-            <div class="mt-1 text-sm text-slate-500">{{ c.estimatedValue }} {{ c.currency }}</div>
+            <div class="mt-1 text-sm text-slate-500">{{ +c.estimatedValue | currency: (c.currency ?? undefined) : 'symbol' : '1.0-2' : vm.locale() }}</div>
           }
           @if (c.status === 'lost' && c.lostReason) {
-            <div class="mt-1 text-xs text-red-500">Reason: {{ c.lostReason }}</div>
+            <div class="mt-1 text-xs text-red-500">{{ 'leads.reason' | translate }} {{ c.lostReason }}</div>
           }
 
           <select
             [id]="'lead-status-' + c.id"
             name="leadStatus"
-            aria-label="Lead status"
+            [attr.aria-label]="'leads.statusAria' | translate"
             [value]="c.status"
             (change)="vm.setStatus(c, $any($event.target).value)"
             [disabled]="c.status === 'converted'"
             class="mt-3 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm outline-none disabled:opacity-60"
           >
-            <option value="new">New</option>
-            <option value="contacted">Contacted</option>
-            <option value="qualified">Qualified</option>
-            <option value="lost">Lost</option>
-            @if (c.status === 'converted') { <option value="converted">Converted</option> }
+            <option value="new">{{ 'leadStatus.new' | translate }}</option>
+            <option value="contacted">{{ 'leadStatus.contacted' | translate }}</option>
+            <option value="qualified">{{ 'leadStatus.qualified' | translate }}</option>
+            <option value="lost">{{ 'leadStatus.lost' | translate }}</option>
+            @if (c.status === 'converted') { <option value="converted">{{ 'leadStatus.converted' | translate }}</option> }
           </select>
 
           <div class="mt-2 flex flex-wrap gap-2">
             @if (c.status !== 'converted' && c.status !== 'lost') {
-              <button type="button" (click)="vm.convert(c)" class="rounded-lg border border-emerald-200 px-3 py-2 text-sm text-emerald-700 hover:bg-emerald-50">Convert</button>
+              <button type="button" (click)="vm.convert(c)" class="rounded-lg border border-emerald-200 px-3 py-2 text-sm text-emerald-700 hover:bg-emerald-50">{{ 'leads.convert' | translate }}</button>
             }
-            <button type="button" (click)="vm.openEdit(c)" class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">Edit</button>
-            <button type="button" (click)="vm.remove(c)" class="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50">Delete</button>
+            <button type="button" (click)="vm.openEdit(c)" class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">{{ 'common.edit' | translate }}</button>
+            <button type="button" (click)="vm.remove(c)" class="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50">{{ 'common.delete' | translate }}</button>
           </div>
         </div>
       }
@@ -89,28 +89,28 @@
   }
 </div>
 
-<app-modal [open]="vm.modalOpen()" [title]="vm.editingId() ? 'Edit lead' : 'New lead'" (close)="vm.modalOpen.set(false)">
+<app-modal [open]="vm.modalOpen()" [title]="(vm.editingId() ? 'leads.editTitle' : 'leads.newTitle') | translate" (close)="vm.modalOpen.set(false)">
   <form [formGroup]="vm.form" (ngSubmit)="vm.save()">
     <label for="lead-source" class="block text-sm font-medium text-slate-700">
-      Source
+      {{ 'leads.source' | translate }}
       <input id="lead-source" name="source" formControlName="source" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
     </label>
     <div class="mt-3 grid grid-cols-2 gap-3">
       <label for="lead-estimated-value" class="block text-sm font-medium text-slate-700">
-        Estimated value
+        {{ 'leads.estimatedValue' | translate }}
         <input id="lead-estimated-value" name="estimatedValue" formControlName="estimatedValue" inputmode="decimal" placeholder="0.00" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
       </label>
       <label for="lead-currency" class="block text-sm font-medium text-slate-700">
-        Currency
+        {{ 'leads.currency' | translate }}
         <input id="lead-currency" name="currency" formControlName="currency" maxlength="3" placeholder="USD" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm uppercase outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
       </label>
     </div>
 
     <div class="mt-5 flex gap-2">
       <button type="submit" [disabled]="vm.saving()" class="flex-1 rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60">
-        {{ vm.saving() ? 'Saving…' : 'Save' }}
+        {{ vm.saving() ? ('common.saving' | translate) : ('common.save' | translate) }}
       </button>
-      <button type="button" (click)="vm.modalOpen.set(false)" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-600">Cancel</button>
+      <button type="button" (click)="vm.modalOpen.set(false)" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-600">{{ 'common.cancel' | translate }}</button>
     </div>
   </form>
 </app-modal>

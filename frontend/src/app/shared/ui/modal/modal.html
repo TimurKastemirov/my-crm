@@ -16,7 +16,7 @@
         <button
           type="button"
           (click)="close.emit()"
-          aria-label="Close"
+          [attr.aria-label]="'a11y.close' | translate"
           class="-mr-1 rounded-lg p-2 text-slate-400 hover:bg-slate-100"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">

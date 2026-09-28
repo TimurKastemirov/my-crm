@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth.service';
 import { extractErrorMessage } from '../../../core/http-error';
 
@@ -7,6 +8,7 @@ import { extractErrorMessage } from '../../../core/http-error';
 export class RegisterComponentService {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -29,7 +31,7 @@ export class RegisterComponentService {
     try {
       await this.auth.register(this.form.getRawValue());
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to register'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('auth.failedRegister')));
     } finally {
       this.loading.set(false);
     }

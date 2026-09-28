@@ -1,5 +1,5 @@
-<h1 class="text-xl font-semibold text-slate-900">Dashboard</h1>
+<h1 class="text-xl font-semibold text-slate-900">{{ 'dashboard.title' | translate }}</h1>
 <p class="mt-2 text-sm text-slate-500">
-  Welcome, {{ vm.user()?.firstName }}. CRM sections are on the left.
+  {{ 'dashboard.welcome' | translate: { name: vm.user()?.firstName } }}
 </p>
-<p class="mt-1 text-xs text-slate-400">Summary and charts will appear in Phase 2.</p>
+<p class="mt-1 text-xs text-slate-400">{{ 'dashboard.phase2' | translate }}</p>

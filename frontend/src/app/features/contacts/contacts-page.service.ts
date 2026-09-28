@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import type { ContactDto } from '@crm/shared';
+import { TranslateService } from '@ngx-translate/core';
 import { extractErrorMessage } from '../../core/http-error';
 import { ContactsApi } from './contacts.api';
 
@@ -8,6 +9,7 @@ import { ContactsApi } from './contacts.api';
 export class ContactsPageComponentService {
   private readonly api = inject(ContactsApi);
   private readonly fb = inject(FormBuilder);
+  private readonly translate = inject(TranslateService);
 
   readonly items = signal<ContactDto[]>([]);
   readonly total = signal(0);
@@ -42,7 +44,7 @@ export class ContactsPageComponentService {
       this.total.set(res.meta.total);
       this.hasNext.set(res.meta.hasNext);
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to load contacts'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('contacts.loadError')));
     } finally {
       this.loading.set(false);
     }
@@ -102,20 +104,20 @@ export class ContactsPageComponentService {
       this.modalOpen.set(false);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to save'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('contacts.saveError')));
     } finally {
       this.saving.set(false);
     }
   }
 
   async remove(c: ContactDto): Promise<void> {
-    if (!confirm(`Delete contact "${c.firstName} ${c.lastName}"?`)) return;
+    if (!confirm(this.translate.instant('contacts.deleteConfirm', { name: `${c.firstName} ${c.lastName}` }))) return;
     this.error.set(null);
     try {
       await this.api.remove(c.id);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to delete'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('contacts.deleteError')));
     }
   }
 }

@@ -1,5 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { A11yModule } from '@angular/cdk/a11y';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /**
  * Responsive modal: full-width bottom-sheet on phones, centered card on sm+.
@@ -7,7 +8,7 @@ import { A11yModule } from '@angular/cdk/a11y';
  */
 @Component({
   selector: 'app-modal',
-  imports: [A11yModule],
+  imports: [A11yModule, TranslatePipe],
   templateUrl: './modal.html',
 })
 export class ModalComponent {

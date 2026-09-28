@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ModalComponent } from '../../shared/ui/modal/modal';
 import { PaginatorComponent } from '../../shared/ui/paginator/paginator';
 import { CompaniesPageComponentService } from './companies-page.service';
@@ -7,7 +8,7 @@ import { CompaniesPageComponentService } from './companies-page.service';
 @Component({
   selector: 'app-companies-page',
   host: { class: 'block h-full' },
-  imports: [ReactiveFormsModule, ModalComponent, PaginatorComponent],
+  imports: [ReactiveFormsModule, ModalComponent, PaginatorComponent, TranslatePipe],
   templateUrl: './companies-page.html',
   providers: [CompaniesPageComponentService],
 })

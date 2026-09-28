@@ -1,29 +1,15 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 import { TaskPriority, TaskStatus, type TaskDto } from '@crm/shared';
 import { extractErrorMessage } from '../../core/http-error';
 import { TasksApi } from './tasks.api';
-
-const STATUS_LABELS: Record<TaskStatus, string> = {
-  open: 'Open',
-  in_progress: 'In progress',
-  done: 'Done',
-  canceled: 'Canceled',
-};
-
-const PRIORITY_LABELS: Record<TaskPriority, string> = {
-  low: 'Low',
-  normal: 'Normal',
-  high: 'High',
-};
 
 @Injectable()
 export class TasksPageComponentService {
   private readonly api = inject(TasksApi);
   private readonly fb = inject(FormBuilder);
-
-  readonly statusLabels = STATUS_LABELS;
-  readonly priorityLabels = PRIORITY_LABELS;
+  private readonly translate = inject(TranslateService);
 
   readonly items = signal<TaskDto[]>([]);
   readonly total = signal(0);
@@ -65,7 +51,7 @@ export class TasksPageComponentService {
       this.total.set(res.meta.total);
       this.hasNext.set(res.meta.hasNext);
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to load tasks'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('tasks.loadError')));
     } finally {
       this.loading.set(false);
     }
@@ -135,7 +121,7 @@ export class TasksPageComponentService {
       this.modalOpen.set(false);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to save'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('tasks.saveError')));
     } finally {
       this.saving.set(false);
     }
@@ -149,18 +135,18 @@ export class TasksPageComponentService {
       await this.api.update(task.id, { status: next });
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to change status'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('tasks.saveError')));
     }
   }
 
   async remove(task: TaskDto): Promise<void> {
-    if (!window.confirm(`Delete task "${task.title}"?`)) return;
+    if (!window.confirm(this.translate.instant('tasks.deleteConfirm', { title: task.title }))) return;
     this.error.set(null);
     try {
       await this.api.remove(task.id);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to delete'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('tasks.deleteError')));
     }
   }
 }

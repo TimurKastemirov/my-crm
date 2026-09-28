@@ -1,5 +1,7 @@
+import { CurrencyPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ModalComponent } from '../../shared/ui/modal/modal';
 import { PaginatorComponent } from '../../shared/ui/paginator/paginator';
 import { LeadsPageComponentService } from './leads-page.service';
@@ -7,7 +9,7 @@ import { LeadsPageComponentService } from './leads-page.service';
 @Component({
   selector: 'app-leads-page',
   host: { class: 'block h-full' },
-  imports: [ReactiveFormsModule, ModalComponent, PaginatorComponent],
+  imports: [ReactiveFormsModule, CurrencyPipe, TranslatePipe, ModalComponent, PaginatorComponent],
   templateUrl: './leads-page.html',
   providers: [LeadsPageComponentService],
 })

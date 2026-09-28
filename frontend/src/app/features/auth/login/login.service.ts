@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth.service';
 import { extractErrorMessage } from '../../../core/http-error';
 
@@ -8,6 +9,7 @@ import { extractErrorMessage } from '../../../core/http-error';
 export class LoginComponentService {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -27,7 +29,7 @@ export class LoginComponentService {
     try {
       await this.auth.login(this.form.getRawValue());
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to sign in'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('auth.failedSignIn')));
     } finally {
       this.loading.set(false);
     }

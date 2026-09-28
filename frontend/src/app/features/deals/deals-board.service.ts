@@ -5,7 +5,9 @@ import {
   moveItemInArray,
   transferArrayItem,
 } from '@angular/cdk/drag-drop';
+import { TranslateService } from '@ngx-translate/core';
 import { DealStatus, type DealDto, type PipelineDto, type PipelineStageDto } from '@crm/shared';
+import { LocaleService } from '../../core/locale.service';
 import { extractErrorMessage } from '../../core/http-error';
 import { DealsApi } from './deals.api';
 import { PipelinesApi } from './pipelines.api';
@@ -20,6 +22,9 @@ export class DealsBoardComponentService {
   private readonly api = inject(DealsApi);
   private readonly pipelinesApi = inject(PipelinesApi);
   private readonly fb = inject(FormBuilder);
+  private readonly translate = inject(TranslateService);
+
+  readonly locale = inject(LocaleService).locale;
 
   readonly pipeline = signal<PipelineDto | null>(null);
   readonly columns = signal<BoardColumn[]>([]);
@@ -60,7 +65,7 @@ export class DealsBoardComponentService {
         })),
       );
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to load the board'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('deals.loadError')));
     } finally {
       this.loading.set(false);
     }
@@ -79,7 +84,7 @@ export class DealsBoardComponentService {
       await this.api.moveStage(deal.id, target.stage.id);
       await this.load(); // refresh the recomputed status (won/lost/open)
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to move the deal'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('deals.moveError')));
       await this.load(); // roll back to the server state
     }
   }
@@ -110,20 +115,20 @@ export class DealsBoardComponentService {
       this.modalOpen.set(false);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to create deal'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('deals.createError')));
     } finally {
       this.saving.set(false);
     }
   }
 
   async remove(deal: DealDto): Promise<void> {
-    if (!window.confirm(`Delete deal "${deal.title}"?`)) return;
+    if (!window.confirm(this.translate.instant('deals.deleteConfirm', { title: deal.title }))) return;
     this.error.set(null);
     try {
       await this.api.remove(deal.id);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Failed to delete'));
+      this.error.set(extractErrorMessage(e, this.translate.instant('deals.deleteError')));
     }
   }
 

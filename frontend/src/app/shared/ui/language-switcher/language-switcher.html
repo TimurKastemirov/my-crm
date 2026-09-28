@@ -1,0 +1,12 @@
+<select
+  id="lang-switcher"
+  name="language"
+  [value]="vm.current()"
+  (change)="vm.change($any($event.target).value)"
+  [attr.aria-label]="'lang.label' | translate"
+  class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-600 outline-none focus:border-indigo-500"
+>
+  @for (l of vm.options; track l) {
+    <option [value]="l">{{ 'lang.' + l | translate }}</option>
+  }
+</select>

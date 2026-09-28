@@ -1,8 +1,8 @@
 <div class="flex h-full flex-col">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    <h1 class="text-xl font-semibold text-slate-900">Tasks</h1>
+    <h1 class="text-xl font-semibold text-slate-900">{{ 'tasks.title' | translate }}</h1>
     <button type="button" (click)="vm.openCreate()" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-500">
-      + Task
+      {{ 'tasks.add' | translate }}
     </button>
   </div>
 
@@ -11,23 +11,23 @@
       #box
       id="tasks-search"
       name="search"
-      aria-label="Search tasks"
+      [attr.aria-label]="'tasks.searchAria' | translate"
       (keyup.enter)="vm.applySearch(box.value)"
-      placeholder="Search + Enter…"
+      [attr.placeholder]="'tasks.searchPlaceholder' | translate"
       class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
     />
-    <select id="tasks-status-filter" name="statusFilter" aria-label="Filter by status" (change)="vm.filterByStatus($any($event.target).value)" class="rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none sm:w-44">
-      <option value="">All statuses</option>
-      <option value="open">Open</option>
-      <option value="in_progress">In progress</option>
-      <option value="done">Done</option>
-      <option value="canceled">Canceled</option>
+    <select id="tasks-status-filter" name="statusFilter" [attr.aria-label]="'tasks.statusFilterAria' | translate" (change)="vm.filterByStatus($any($event.target).value)" class="rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none sm:w-44">
+      <option value="">{{ 'common.allStatuses' | translate }}</option>
+      <option value="open">{{ 'taskStatus.open' | translate }}</option>
+      <option value="in_progress">{{ 'taskStatus.in_progress' | translate }}</option>
+      <option value="done">{{ 'taskStatus.done' | translate }}</option>
+      <option value="canceled">{{ 'taskStatus.canceled' | translate }}</option>
     </select>
-    <select id="tasks-priority-filter" name="priorityFilter" aria-label="Filter by priority" (change)="vm.filterByPriority($any($event.target).value)" class="rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none sm:w-48">
-      <option value="">Any priority</option>
-      <option value="low">Low</option>
-      <option value="normal">Normal</option>
-      <option value="high">High</option>
+    <select id="tasks-priority-filter" name="priorityFilter" [attr.aria-label]="'tasks.priorityFilterAria' | translate" (change)="vm.filterByPriority($any($event.target).value)" class="rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none sm:w-48">
+      <option value="">{{ 'tasks.anyPriority' | translate }}</option>
+      <option value="low">{{ 'taskPriority.low' | translate }}</option>
+      <option value="normal">{{ 'taskPriority.normal' | translate }}</option>
+      <option value="high">{{ 'taskPriority.high' | translate }}</option>
     </select>
   </div>
 
@@ -36,10 +36,10 @@
   }
 
   @if (vm.loading()) {
-    <p class="mt-4 flex min-h-0 flex-1 items-center justify-center text-sm text-slate-400">Loading…</p>
+    <p class="mt-4 flex min-h-0 flex-1 items-center justify-center text-sm text-slate-400">{{ 'common.loading' | translate }}</p>
   } @else if (vm.items().length === 0) {
     <div class="mt-4 flex min-h-0 flex-1 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-400">
-      No tasks yet
+      {{ 'tasks.empty' | translate }}
     </div>
   } @else {
     <div class="mt-4 grid min-h-0 flex-1 grid-cols-1 content-start gap-3 overflow-auto md:grid-cols-2 lg:grid-cols-3">
@@ -53,28 +53,28 @@
               [class.text-red-700]="c.priority === 'high'"
               [class.bg-slate-100]="c.priority !== 'high'"
               [class.text-slate-600]="c.priority !== 'high'"
-            >{{ vm.priorityLabels[c.priority] }}</span>
+            >{{ ('taskPriority.' + c.priority) | translate }}</span>
           </div>
           @if (c.description) { <div class="mt-1 line-clamp-2 text-sm text-slate-500">{{ c.description }}</div> }
-          @if (c.dueAt) { <div class="mt-1 text-xs text-slate-400">Due: {{ c.dueAt | date: 'dd.MM.yyyy HH:mm' }}</div> }
+          @if (c.dueAt) { <div class="mt-1 text-xs text-slate-400">{{ 'tasks.dueShort' | translate }} {{ c.dueAt | date: 'dd.MM.yyyy HH:mm' }}</div> }
 
           <select
             [id]="'task-status-' + c.id"
             name="taskStatus"
-            aria-label="Task status"
+            [attr.aria-label]="'tasks.statusAria' | translate"
             [value]="c.status"
             (change)="vm.setStatus(c, $any($event.target).value)"
             class="mt-3 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm outline-none"
           >
-            <option value="open">Open</option>
-            <option value="in_progress">In progress</option>
-            <option value="done">Done</option>
-            <option value="canceled">Canceled</option>
+            <option value="open">{{ 'taskStatus.open' | translate }}</option>
+            <option value="in_progress">{{ 'taskStatus.in_progress' | translate }}</option>
+            <option value="done">{{ 'taskStatus.done' | translate }}</option>
+            <option value="canceled">{{ 'taskStatus.canceled' | translate }}</option>
           </select>
 
           <div class="mt-2 flex gap-2">
-            <button type="button" (click)="vm.openEdit(c)" class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">Edit</button>
-            <button type="button" (click)="vm.remove(c)" class="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50">Delete</button>
+            <button type="button" (click)="vm.openEdit(c)" class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">{{ 'common.edit' | translate }}</button>
+            <button type="button" (click)="vm.remove(c)" class="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50">{{ 'common.delete' | translate }}</button>
           </div>
         </div>
       }
@@ -85,36 +85,36 @@
   }
 </div>
 
-<app-modal [open]="vm.modalOpen()" [title]="vm.editingId() ? 'Edit task' : 'New task'" (close)="vm.modalOpen.set(false)">
+<app-modal [open]="vm.modalOpen()" [title]="(vm.editingId() ? 'tasks.editTitle' : 'tasks.newTitle') | translate" (close)="vm.modalOpen.set(false)">
   <form [formGroup]="vm.form" (ngSubmit)="vm.save()">
     <label for="task-title" class="block text-sm font-medium text-slate-700">
-      Title
+      {{ 'tasks.name' | translate }}
       <input id="task-title" name="title" formControlName="title" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
     </label>
     <label for="task-description" class="mt-3 block text-sm font-medium text-slate-700">
-      Description
+      {{ 'tasks.description' | translate }}
       <textarea id="task-description" name="description" formControlName="description" rows="3" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"></textarea>
     </label>
     <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
       <label for="task-priority" class="block text-sm font-medium text-slate-700">
-        Priority
+        {{ 'tasks.priority' | translate }}
         <select id="task-priority" name="priority" formControlName="priority" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500">
-          <option value="low">Low</option>
-          <option value="normal">Normal</option>
-          <option value="high">High</option>
+          <option value="low">{{ 'taskPriority.low' | translate }}</option>
+          <option value="normal">{{ 'taskPriority.normal' | translate }}</option>
+          <option value="high">{{ 'taskPriority.high' | translate }}</option>
         </select>
       </label>
       <label for="task-due-at" class="block text-sm font-medium text-slate-700">
-        Due date
+        {{ 'tasks.due' | translate }}
         <input id="task-due-at" name="dueAt" type="datetime-local" formControlName="dueAt" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
       </label>
     </div>
 
     <div class="mt-5 flex gap-2">
       <button type="submit" [disabled]="vm.saving()" class="flex-1 rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60">
-        {{ vm.saving() ? 'Saving…' : 'Save' }}
+        {{ vm.saving() ? ('common.saving' | translate) : ('common.save' | translate) }}
       </button>
-      <button type="button" (click)="vm.modalOpen.set(false)" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-600">Cancel</button>
+      <button type="button" (click)="vm.modalOpen.set(false)" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-600">{{ 'common.cancel' | translate }}</button>
     </div>
   </form>
 </app-modal>

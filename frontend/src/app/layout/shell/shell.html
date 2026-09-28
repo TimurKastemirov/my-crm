@@ -4,16 +4,17 @@
       type="button"
       class="-ml-1 rounded-lg p-2 text-slate-600 hover:bg-slate-100 sm:hidden"
       (click)="vm.menuOpen.set(true)"
-      aria-label="Open menu"
+      [attr.aria-label]="'a11y.openMenu' | translate"
     >
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
         <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
       </svg>
     </button>
     <span class="text-lg font-semibold text-indigo-600">CRM</span>
-    <div class="ml-auto flex items-center gap-3">
-      <span class="hidden max-w-[40vw] truncate text-sm text-slate-500 sm:inline">{{ vm.user()?.email }}</span>
-      <button type="button" (click)="vm.logout()" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">Sign out</button>
+    <div class="ml-auto flex items-center gap-2 sm:gap-3">
+      <app-language-switcher />
+      <span class="hidden max-w-[30vw] truncate text-sm text-slate-500 sm:inline">{{ vm.user()?.email }}</span>
+      <button type="button" (click)="vm.logout()" class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">{{ 'common.signOut' | translate }}</button>
     </div>
   </header>
 
@@ -26,7 +27,7 @@
             routerLinkActive="bg-indigo-50 text-indigo-700"
             [routerLinkActiveOptions]="{ exact: item.path === '/' }"
             class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
-          >{{ item.label }}</a>
+          >{{ item.label | translate }}</a>
         }
       </nav>
     </aside>
@@ -43,7 +44,7 @@
               routerLinkActive="bg-indigo-50 text-indigo-700"
               [routerLinkActiveOptions]="{ exact: item.path === '/' }"
               class="rounded-lg px-3 py-3 text-sm font-medium text-slate-600 hover:bg-slate-100"
-            >{{ item.label }}</a>
+            >{{ item.label | translate }}</a>
           }
         </nav>
       </div>
