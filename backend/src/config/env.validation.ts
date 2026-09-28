@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
 /**
- * Валидация переменных окружения (§4.1 / §10 ТЗ).
- * Подключается в ConfigModule.forRoot({ validate: validateEnv }) — приложение
- * падает на старте с понятным сообщением, если .env некорректен.
+ * Environment variable validation (§4.1 / §10 of the spec).
+ * Plugged into ConfigModule.forRoot({ validate: validateEnv }) — the app
+ * fails to start with a clear message if .env is invalid.
  */
 
 /**
- * true только для 'true' / '1' / 'yes'. В отличие от z.coerce.boolean(),
- * который считает истиной любую непустую строку (включая 'false').
+ * true only for 'true' / '1' / 'yes'. Unlike z.coerce.boolean(),
+ * which treats any non-empty string (including 'false') as true.
  */
 const zBool = z.preprocess((v) => {
   if (typeof v === 'boolean') return v;
@@ -36,13 +36,13 @@ export const envSchema = z.object({
   REDIS_TLS_ENABLED: zBool,
   REDIS_PASSWORD: z.string().optional(),
 
-  // JWT — обязательны (модуль Auth, §6 ТЗ). Секреты — длинные случайные строки.
+  // JWT — required (Auth module, §6 of the spec). Secrets must be long random strings.
   JWT_ACCESS_SECRET: z.string().min(16),
   JWT_REFRESH_SECRET: z.string().min(16),
   JWT_ACCESS_TTL: z.string().min(1).default('15m'),
   JWT_REFRESH_TTL: z.string().min(1).default('30d'),
 
-  // Список origin через запятую, либо '*' в dev.
+  // Comma-separated list of origins, or '*' in dev.
   CORS_ORIGINS: z.string().default('*'),
 });
 
@@ -54,7 +54,7 @@ export function validateEnv(config: Record<string, unknown>): Env {
     const issues = parsed.error.issues
       .map((i) => `  • ${i.path.join('.') || '(root)'}: ${i.message}`)
       .join('\n');
-    throw new Error(`Некорректные переменные окружения:\n${issues}`);
+    throw new Error(`Invalid environment variables:\n${issues}`);
   }
   return parsed.data;
 }

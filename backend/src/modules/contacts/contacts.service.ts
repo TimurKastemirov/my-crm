@@ -105,13 +105,13 @@ export class ContactsService {
       where: { id: companyId, organizationId },
     });
     if (!company) {
-      throw new BadRequestException('Компания не найдена в организации');
+      throw new BadRequestException('Company not found in the organization');
     }
   }
 
   private async mustFind(organizationId: string, id: string): Promise<ContactEntity> {
     const entity = await this.repo.findOne({ where: { id, organizationId } });
-    if (!entity) throw new NotFoundException('Контакт не найден');
+    if (!entity) throw new NotFoundException('Contact not found');
     return entity;
   }
 

@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/** RBAC (§6.4 ТЗ): permissions, roles, role_permissions, user_roles. */
+/** RBAC (§6.4 of the spec): permissions, roles, role_permissions, user_roles. */
 export class InitRbac1790600001000 implements MigrationInterface {
   name = 'InitRbac1790600001000';
 

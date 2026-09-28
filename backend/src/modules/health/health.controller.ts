@@ -18,9 +18,9 @@ export class HealthController {
   @HealthCheck()
   @ApiOperation({
     summary: 'Liveness',
-    description: 'Жив ли процесс (без проверки внешних зависимостей). Для liveness-проб оркестратора.',
+    description: 'Whether the process is alive (without checking external dependencies). For the orchestrator\'s liveness probes.',
   })
-  @ApiOkResponse({ description: 'Сервис жив' })
+  @ApiOkResponse({ description: 'Service is alive' })
   check() {
     return this.health.check([
       () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),

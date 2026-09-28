@@ -1,6 +1,6 @@
 import { Entity, PrimaryColumn } from 'typeorm';
 
-/** Связь роль ↔ право (many-to-many как явная таблица). */
+/** Role ↔ permission link (many-to-many as an explicit table). */
 @Entity('role_permissions')
 export class RolePermissionEntity {
   @PrimaryColumn({ name: 'role_id', type: 'uuid' })

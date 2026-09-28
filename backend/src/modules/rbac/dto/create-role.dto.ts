@@ -11,10 +11,10 @@ export class CreateRoleDto {
   @MaxLength(80)
   name!: string;
 
-  /** Машинный код роли в рамках организации, напр. "sales_lead". */
+  /** Machine code of the role within the organization, e.g. "sales_lead". */
   @IsString()
   @Matches(/^[a-z][a-z0-9_]{1,39}$/, {
-    message: 'code: только [a-z0-9_], начинается с буквы, 2–40 символов',
+    message: 'code: only [a-z0-9_], must start with a letter, 2–40 characters',
   })
   code!: string;
 
@@ -23,7 +23,7 @@ export class CreateRoleDto {
   @MaxLength(255)
   description?: string;
 
-  /** Список кодов прав (см. GET /permissions). */
+  /** List of permission codes (see GET /permissions). */
   @IsArray()
   @IsString({ each: true })
   permissions!: string[];

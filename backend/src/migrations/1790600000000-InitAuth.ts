@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
- * Начальная схема аутентификации/мультиарендности (§5 ТЗ):
+ * Initial authentication/multi-tenancy schema (§5 of the spec):
  * organizations, users, organization_members, refresh_tokens.
  */
 export class InitAuth1790600000000 implements MigrationInterface {

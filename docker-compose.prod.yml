@@ -1,5 +1,5 @@
-# Продакшн-подобный запуск: docker compose -f docker-compose.prod.yml up --build
-# Секреты обязаны прийти из окружения/.env (без небезопасных дефолтов).
+# Production-like run: docker compose -f docker-compose.prod.yml up --build
+# Secrets must come from the environment/.env (no insecure defaults).
 name: my-crm-prod
 
 services:

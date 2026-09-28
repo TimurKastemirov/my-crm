@@ -5,16 +5,16 @@ import { extractErrorMessage } from '../../core/http-error';
 import { TasksApi } from './tasks.api';
 
 const STATUS_LABELS: Record<TaskStatus, string> = {
-  open: 'Открыта',
-  in_progress: 'В работе',
-  done: 'Готово',
-  canceled: 'Отменена',
+  open: 'Open',
+  in_progress: 'In progress',
+  done: 'Done',
+  canceled: 'Canceled',
 };
 
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
-  low: 'Низкий',
-  normal: 'Обычный',
-  high: 'Высокий',
+  low: 'Low',
+  normal: 'Normal',
+  high: 'High',
 };
 
 @Injectable()
@@ -65,7 +65,7 @@ export class TasksPageComponentService {
       this.total.set(res.meta.total);
       this.hasNext.set(res.meta.hasNext);
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось загрузить задачи'));
+      this.error.set(extractErrorMessage(e, 'Failed to load tasks'));
     } finally {
       this.loading.set(false);
     }
@@ -135,7 +135,7 @@ export class TasksPageComponentService {
       this.modalOpen.set(false);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось сохранить'));
+      this.error.set(extractErrorMessage(e, 'Failed to save'));
     } finally {
       this.saving.set(false);
     }
@@ -149,18 +149,18 @@ export class TasksPageComponentService {
       await this.api.update(task.id, { status: next });
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось сменить статус'));
+      this.error.set(extractErrorMessage(e, 'Failed to change status'));
     }
   }
 
   async remove(task: TaskDto): Promise<void> {
-    if (!window.confirm(`Удалить задачу «${task.title}»?`)) return;
+    if (!window.confirm(`Delete task "${task.title}"?`)) return;
     this.error.set(null);
     try {
       await this.api.remove(task.id);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось удалить'));
+      this.error.set(extractErrorMessage(e, 'Failed to delete'));
     }
   }
 }

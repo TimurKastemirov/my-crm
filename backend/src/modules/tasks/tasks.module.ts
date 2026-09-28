@@ -11,7 +11,7 @@ import { TasksController } from './tasks.controller.js';
   imports: [
     SecurityModule,
     RbacModule,
-    // OrganizationMember — для проверки, что исполнитель состоит в организации.
+    // OrganizationMember — to verify that the assignee is a member of the organization.
     TypeOrmModule.forFeature([TaskEntity, OrganizationMemberEntity]),
   ],
   controllers: [TasksController],

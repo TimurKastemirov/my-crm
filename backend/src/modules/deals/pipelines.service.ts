@@ -29,7 +29,7 @@ export class PipelinesService {
     private readonly dealRepo: Repository<DealEntity>,
   ) {}
 
-  /** Дефолтная воронка + этапы при создании организации (в транзакции register). */
+  /** Default pipeline + stages when an organization is created (inside the register transaction). */
   async provisionDefault(manager: EntityManager, organizationId: string): Promise<void> {
     const pipelineRepo = manager.getRepository(PipelineEntity);
     const stageRepo = manager.getRepository(PipelineStageEntity);
@@ -94,10 +94,10 @@ export class PipelinesService {
 
   async deletePipeline(organizationId: string, id: string): Promise<void> {
     const pipeline = await this.mustFindPipeline(organizationId, id);
-    if (pipeline.isDefault) throw new ForbiddenException('Нельзя удалить дефолтную воронку');
+    if (pipeline.isDefault) throw new ForbiddenException('Cannot delete the default pipeline');
     const deals = await this.dealRepo.count({ where: { organizationId, pipelineId: id }, withDeleted: true });
-    if (deals > 0) throw new BadRequestException('В воронке есть сделки — удаление запрещено');
-    await this.pipelineRepo.delete({ id }); // стадии удалятся каскадом
+    if (deals > 0) throw new BadRequestException('The pipeline has deals — deletion is not allowed');
+    await this.pipelineRepo.delete({ id }); // stages are deleted via cascade
   }
 
   // ---- stages ----
@@ -141,33 +141,33 @@ export class PipelinesService {
   async deleteStage(organizationId: string, pipelineId: string, stageId: string): Promise<void> {
     await this.mustFindStage(organizationId, pipelineId, stageId);
     const deals = await this.dealRepo.count({ where: { organizationId, stageId }, withDeleted: true });
-    if (deals > 0) throw new BadRequestException('На этапе есть сделки — удаление запрещено');
+    if (deals > 0) throw new BadRequestException('The stage has deals — deletion is not allowed');
     await this.stageRepo.delete({ id: stageId });
   }
 
-  /** Дефолтная воронка + первый этап — для конвертации лида. */
+  /** Default pipeline + first stage — for lead conversion. */
   async defaultTarget(organizationId: string): Promise<{ pipelineId: string; stageId: string }> {
     const pipeline =
       (await this.pipelineRepo.findOne({ where: { organizationId, isDefault: true } })) ??
       (await this.pipelineRepo.findOne({ where: { organizationId }, order: { position: 'ASC' } }));
-    if (!pipeline) throw new BadRequestException('В организации нет воронок');
+    if (!pipeline) throw new BadRequestException('The organization has no pipelines');
     const stage = await this.stageRepo.findOne({
       where: { organizationId, pipelineId: pipeline.id },
       order: { position: 'ASC' },
     });
-    if (!stage) throw new BadRequestException('В воронке нет этапов');
+    if (!stage) throw new BadRequestException('The pipeline has no stages');
     return { pipelineId: pipeline.id, stageId: stage.id };
   }
 
   private async mustFindPipeline(organizationId: string, id: string): Promise<PipelineEntity> {
     const pipeline = await this.pipelineRepo.findOne({ where: { id, organizationId } });
-    if (!pipeline) throw new NotFoundException('Воронка не найдена');
+    if (!pipeline) throw new NotFoundException('Pipeline not found');
     return pipeline;
   }
 
   private async mustFindStage(organizationId: string, pipelineId: string, stageId: string): Promise<PipelineStageEntity> {
     const stage = await this.stageRepo.findOne({ where: { id: stageId, pipelineId, organizationId } });
-    if (!stage) throw new NotFoundException('Этап не найден');
+    if (!stage) throw new NotFoundException('Stage not found');
     return stage;
   }
 

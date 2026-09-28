@@ -10,8 +10,8 @@ import type { Request } from 'express';
 import type { JwtPayload } from '@crm/shared';
 
 /**
- * Проверяет Bearer access-token и кладёт payload в request.user.
- * Собственный guard (без passport) — как в §4.1 ТЗ.
+ * Validates the Bearer access token and puts the payload on request.user.
+ * Custom guard (without passport) — as in the spec, §4.1.
  */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -27,7 +27,7 @@ export class JwtAuthGuard implements CanActivate {
     const header = request.headers.authorization;
 
     if (!header?.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Отсутствует Bearer-токен');
+      throw new UnauthorizedException('Missing Bearer token');
     }
 
     const token = header.slice('Bearer '.length).trim();
@@ -38,7 +38,7 @@ export class JwtAuthGuard implements CanActivate {
       request.user = payload;
       return true;
     } catch {
-      throw new UnauthorizedException('Недействительный или просроченный токен');
+      throw new UnauthorizedException('Invalid or expired token');
     }
   }
 }

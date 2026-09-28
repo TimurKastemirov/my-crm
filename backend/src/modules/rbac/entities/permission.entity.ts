@@ -1,6 +1,6 @@
 import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
-/** Справочник прав (dot-notation: contacts.read, deals.create, ...). Глобальный, не per-org. */
+/** Permission catalog (dot notation: contacts.read, deals.create, ...). Global, not per-org. */
 @Entity('permissions')
 export class PermissionEntity {
   @PrimaryGeneratedColumn('uuid')

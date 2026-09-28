@@ -11,7 +11,7 @@ export class UpdateRoleDto {
   @MaxLength(255)
   description?: string;
 
-  /** Полный новый набор кодов прав (заменяет текущий). */
+  /** Full new set of permission codes (replaces the current one). */
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

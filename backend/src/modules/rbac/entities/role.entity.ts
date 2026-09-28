@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-/** Роль в рамках организации. Системные роли (is_system) сидируются при создании организации. */
+/** Role within an organization. System roles (is_system) are seeded when the organization is created. */
 @Entity('roles')
 @Index('uq_roles_org_code', ['organizationId', 'code'], { unique: true })
 export class RoleEntity {

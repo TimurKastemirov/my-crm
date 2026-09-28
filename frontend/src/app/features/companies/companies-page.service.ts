@@ -41,7 +41,7 @@ export class CompaniesPageComponentService {
       this.total.set(res.meta.total);
       this.hasNext.set(res.meta.hasNext);
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось загрузить компании'));
+      this.error.set(extractErrorMessage(e, 'Failed to load companies'));
     } finally {
       this.loading.set(false);
     }
@@ -99,20 +99,20 @@ export class CompaniesPageComponentService {
       this.modalOpen.set(false);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось сохранить'));
+      this.error.set(extractErrorMessage(e, 'Failed to save'));
     } finally {
       this.saving.set(false);
     }
   }
 
   async remove(c: CompanyDto): Promise<void> {
-    if (!confirm(`Удалить компанию «${c.name}»?`)) return;
+    if (!confirm(`Delete company "${c.name}"?`)) return;
     this.error.set(null);
     try {
       await this.api.remove(c.id);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось удалить'));
+      this.error.set(extractErrorMessage(e, 'Failed to delete'));
     }
   }
 }

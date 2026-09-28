@@ -34,21 +34,21 @@ export class PipelinesController {
 
   @Get()
   @RequirePermissions(PERMISSIONS.DEALS_READ)
-  @ApiOperation({ summary: 'Воронки со стадиями' })
+  @ApiOperation({ summary: 'Pipelines with stages' })
   list(@CurrentUser() user: JwtPayload): Promise<PipelineDto[]> {
     return this.pipelines.listPipelines(user.organizationId);
   }
 
   @Post()
   @RequirePermissions(PERMISSIONS.PIPELINES_MANAGE)
-  @ApiOperation({ summary: 'Создать воронку' })
+  @ApiOperation({ summary: 'Create pipeline' })
   create(@CurrentUser() user: JwtPayload, @Body() dto: CreatePipelineDto): Promise<PipelineDto> {
     return this.pipelines.createPipeline(user.organizationId, dto);
   }
 
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.PIPELINES_MANAGE)
-  @ApiOperation({ summary: 'Обновить воронку' })
+  @ApiOperation({ summary: 'Update pipeline' })
   update(
     @CurrentUser() user: JwtPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -60,14 +60,14 @@ export class PipelinesController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermissions(PERMISSIONS.PIPELINES_MANAGE)
-  @ApiOperation({ summary: 'Удалить воронку (нельзя дефолтную/с сделками)' })
+  @ApiOperation({ summary: 'Delete pipeline (cannot delete default or one with deals)' })
   remove(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.pipelines.deletePipeline(user.organizationId, id);
   }
 
   @Get(':id/stages')
   @RequirePermissions(PERMISSIONS.DEALS_READ)
-  @ApiOperation({ summary: 'Этапы воронки' })
+  @ApiOperation({ summary: 'Pipeline stages' })
   listStages(
     @CurrentUser() user: JwtPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -77,7 +77,7 @@ export class PipelinesController {
 
   @Post(':id/stages')
   @RequirePermissions(PERMISSIONS.PIPELINES_MANAGE)
-  @ApiOperation({ summary: 'Добавить этап' })
+  @ApiOperation({ summary: 'Add stage' })
   createStage(
     @CurrentUser() user: JwtPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -88,7 +88,7 @@ export class PipelinesController {
 
   @Patch(':id/stages/:stageId')
   @RequirePermissions(PERMISSIONS.PIPELINES_MANAGE)
-  @ApiOperation({ summary: 'Обновить этап' })
+  @ApiOperation({ summary: 'Update stage' })
   updateStage(
     @CurrentUser() user: JwtPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -101,7 +101,7 @@ export class PipelinesController {
   @Delete(':id/stages/:stageId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermissions(PERMISSIONS.PIPELINES_MANAGE)
-  @ApiOperation({ summary: 'Удалить этап (нельзя со сделками)' })
+  @ApiOperation({ summary: 'Delete stage (cannot delete one with deals)' })
   removeStage(
     @CurrentUser() user: JwtPayload,
     @Param('id', ParseUUIDPipe) id: string,

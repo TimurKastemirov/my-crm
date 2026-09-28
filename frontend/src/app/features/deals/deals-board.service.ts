@@ -60,7 +60,7 @@ export class DealsBoardComponentService {
         })),
       );
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось загрузить доску'));
+      this.error.set(extractErrorMessage(e, 'Failed to load the board'));
     } finally {
       this.loading.set(false);
     }
@@ -77,10 +77,10 @@ export class DealsBoardComponentService {
     transferArrayItem(source.deals, target.deals, event.previousIndex, event.currentIndex);
     try {
       await this.api.moveStage(deal.id, target.stage.id);
-      await this.load(); // подтянуть пересчитанный статус (won/lost/open)
+      await this.load(); // refresh the recomputed status (won/lost/open)
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось переместить сделку'));
-      await this.load(); // откат к серверному состоянию
+      this.error.set(extractErrorMessage(e, 'Failed to move the deal'));
+      await this.load(); // roll back to the server state
     }
   }
 
@@ -110,20 +110,20 @@ export class DealsBoardComponentService {
       this.modalOpen.set(false);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось создать сделку'));
+      this.error.set(extractErrorMessage(e, 'Failed to create deal'));
     } finally {
       this.saving.set(false);
     }
   }
 
   async remove(deal: DealDto): Promise<void> {
-    if (!window.confirm(`Удалить сделку «${deal.title}»?`)) return;
+    if (!window.confirm(`Delete deal "${deal.title}"?`)) return;
     this.error.set(null);
     try {
       await this.api.remove(deal.id);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось удалить'));
+      this.error.set(extractErrorMessage(e, 'Failed to delete'));
     }
   }
 

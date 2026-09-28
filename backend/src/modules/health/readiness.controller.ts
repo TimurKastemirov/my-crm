@@ -13,9 +13,9 @@ import {
 import { RedisHealthIndicator } from './redis.health.js';
 
 /**
- * Readiness (§10.4 ТЗ): проверяет внешние зависимости — PostgreSQL и Redis.
- * Используется оркестратором (docker-compose healthcheck) для решения «готов принимать трафик».
- * Отдельно от liveness (HealthController), чтобы liveness/e2e не требовали инфраструктуры.
+ * Readiness (spec §10.4): checks external dependencies — PostgreSQL and Redis.
+ * Used by the orchestrator (docker-compose healthcheck) to decide whether it's "ready to accept traffic".
+ * Kept separate from liveness (HealthController) so liveness/e2e don't require infrastructure.
  */
 @ApiTags('health')
 @Controller('health')
@@ -30,10 +30,10 @@ export class ReadinessController {
   @HealthCheck()
   @ApiOperation({
     summary: 'Readiness',
-    description: 'Готовность принимать трафик: проверка PostgreSQL и Redis.',
+    description: 'Readiness to accept traffic: checks PostgreSQL and Redis.',
   })
-  @ApiOkResponse({ description: 'Все зависимости доступны' })
-  @ApiServiceUnavailableResponse({ description: 'Одна из зависимостей недоступна' })
+  @ApiOkResponse({ description: 'All dependencies are available' })
+  @ApiServiceUnavailableResponse({ description: 'One of the dependencies is unavailable' })
   ready() {
     return this.health.check([
       () => this.db.pingCheck('database'),

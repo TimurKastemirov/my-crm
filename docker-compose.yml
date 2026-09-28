@@ -1,5 +1,5 @@
-# Локальная разработка. Запуск: docker compose up --build
-# Переменные берутся из корневого .env (см. backend/.env.example), с безопасными dev-дефолтами.
+# Local development. Run: docker compose up --build
+# Variables come from the root .env (see backend/.env.example), with safe dev defaults.
 name: my-crm
 
 services:
@@ -49,7 +49,7 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-*}
     ports:
       - "3000:3000"
-    # Hot-reload: монтируем только исходники (node_modules/dist остаются из образа).
+    # Hot-reload: mount only sources (node_modules/dist stay from the image).
     volumes:
       - ./backend/src:/app/backend/src
       - ./packages/shared/src:/app/packages/shared/src

@@ -90,7 +90,7 @@ export class LeadsService {
     if (dto.companyId !== undefined) entity.companyId = dto.companyId ?? null;
     if (dto.estimatedValue !== undefined) entity.estimatedValue = dto.estimatedValue ?? null;
     if (dto.currency !== undefined) entity.currency = dto.currency ?? null;
-    // status меняется только через changeStatus (см. ниже).
+    // status is changed only via changeStatus (see below).
     await this.repo.save(entity);
     return this.toDto(entity);
   }
@@ -103,11 +103,11 @@ export class LeadsService {
     const entity = await this.mustFind(organizationId, id);
     if (dto.status === LeadStatus.Converted) {
       throw new BadRequestException(
-        'Статус "converted" достигается конвертацией лида в сделку (появится с модулем Deals)',
+        'The "converted" status is reached by converting a lead into a deal (available via the Deals module)',
       );
     }
     if (dto.status === LeadStatus.Lost && !dto.lostReason) {
-      throw new BadRequestException('Для перевода в "lost" укажите lostReason');
+      throw new BadRequestException('To move to "lost", provide lostReason');
     }
     entity.status = dto.status;
     entity.lostReason = dto.status === LeadStatus.Lost ? (dto.lostReason ?? null) : null;
@@ -120,7 +120,7 @@ export class LeadsService {
     await this.repo.softDelete({ id });
   }
 
-  /** Конвертация лида в сделку: создаёт сделку и помечает лид converted. */
+  /** Converts a lead into a deal: creates the deal and marks the lead as converted. */
   async convert(
     organizationId: string,
     ownerId: string,
@@ -129,10 +129,10 @@ export class LeadsService {
   ): Promise<{ lead: LeadDto; deal: DealDto }> {
     const lead = await this.mustFind(organizationId, id);
     if (lead.status === LeadStatus.Converted) {
-      throw new BadRequestException('Лид уже конвертирован');
+      throw new BadRequestException('Lead already converted');
     }
     if (lead.status === LeadStatus.Lost) {
-      throw new BadRequestException('Проигранный лид нельзя конвертировать');
+      throw new BadRequestException('A lost lead cannot be converted');
     }
 
     const target =
@@ -165,17 +165,17 @@ export class LeadsService {
   ): Promise<void> {
     if (contactId) {
       const contact = await this.contactRepo.findOne({ where: { id: contactId, organizationId } });
-      if (!contact) throw new BadRequestException('Контакт не найден в организации');
+      if (!contact) throw new BadRequestException('Contact not found in the organization');
     }
     if (companyId) {
       const company = await this.companyRepo.findOne({ where: { id: companyId, organizationId } });
-      if (!company) throw new BadRequestException('Компания не найдена в организации');
+      if (!company) throw new BadRequestException('Company not found in the organization');
     }
   }
 
   private async mustFind(organizationId: string, id: string): Promise<LeadEntity> {
     const entity = await this.repo.findOne({ where: { id, organizationId } });
-    if (!entity) throw new NotFoundException('Лид не найден');
+    if (!entity) throw new NotFoundException('Lead not found');
     return entity;
   }
 

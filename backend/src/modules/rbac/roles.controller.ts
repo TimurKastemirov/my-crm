@@ -40,24 +40,24 @@ export class RolesController {
 
   @Get('permissions')
   @RequirePermissions(PERMISSIONS.ROLES_MANAGE)
-  @ApiOperation({ summary: 'Справочник прав', description: 'Все доступные коды прав.' })
-  @ApiOkResponse({ description: 'Список прав' })
+  @ApiOperation({ summary: 'Permission catalog', description: 'All available permission codes.' })
+  @ApiOkResponse({ description: 'List of permissions' })
   listPermissions() {
     return this.permissions.list();
   }
 
   @Get('roles')
   @RequirePermissions(PERMISSIONS.ROLES_MANAGE)
-  @ApiOperation({ summary: 'Роли организации' })
-  @ApiOkResponse({ description: 'Список ролей с их правами' })
+  @ApiOperation({ summary: 'Organization roles' })
+  @ApiOkResponse({ description: 'List of roles with their permissions' })
   listRoles(@CurrentUser() user: JwtPayload): Promise<RoleDto[]> {
     return this.roles.listRoles(user.organizationId);
   }
 
   @Post('roles')
   @RequirePermissions(PERMISSIONS.ROLES_MANAGE)
-  @ApiOperation({ summary: 'Создать роль' })
-  @ApiOkResponse({ description: 'Созданная роль' })
+  @ApiOperation({ summary: 'Create a role' })
+  @ApiOkResponse({ description: 'Created role' })
   createRole(
     @CurrentUser() user: JwtPayload,
     @Body() dto: CreateRoleDto,
@@ -67,8 +67,8 @@ export class RolesController {
 
   @Patch('roles/:id')
   @RequirePermissions(PERMISSIONS.ROLES_MANAGE)
-  @ApiOperation({ summary: 'Обновить роль', description: 'Системные роли неизменяемы.' })
-  @ApiOkResponse({ description: 'Обновлённая роль' })
+  @ApiOperation({ summary: 'Update a role', description: 'System roles are immutable.' })
+  @ApiOkResponse({ description: 'Updated role' })
   updateRole(
     @CurrentUser() user: JwtPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -80,8 +80,8 @@ export class RolesController {
   @Delete('roles/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermissions(PERMISSIONS.ROLES_MANAGE)
-  @ApiOperation({ summary: 'Удалить роль', description: 'Системные роли удалять нельзя.' })
-  @ApiNoContentResponse({ description: 'Роль удалена' })
+  @ApiOperation({ summary: 'Delete a role', description: 'System roles cannot be deleted.' })
+  @ApiNoContentResponse({ description: 'Role deleted' })
   deleteRole(
     @CurrentUser() user: JwtPayload,
     @Param('id', ParseUUIDPipe) id: string,

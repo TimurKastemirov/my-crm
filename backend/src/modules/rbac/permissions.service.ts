@@ -13,7 +13,7 @@ export class PermissionsService implements OnApplicationBootstrap {
     private readonly repo: Repository<PermissionEntity>,
   ) {}
 
-  /** Идемпотентно синхронизирует справочник прав с кодами из @crm/shared при старте. */
+  /** Idempotently syncs the permission catalog with the codes from @crm/shared on startup. */
   async onApplicationBootstrap(): Promise<void> {
     const values = ALL_PERMISSIONS.map((code) => ({ code }));
     await this.repo
@@ -22,7 +22,7 @@ export class PermissionsService implements OnApplicationBootstrap {
       .values(values)
       .orIgnore()
       .execute();
-    this.logger.log(`Каталог прав синхронизирован: ${values.length} кодов`);
+    this.logger.log(`Permission catalog synced: ${values.length} codes`);
   }
 
   list(): Promise<PermissionEntity[]> {

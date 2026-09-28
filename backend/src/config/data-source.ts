@@ -2,20 +2,20 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 
 /**
- * DataSource для TypeORM CLI (миграции). §4.1 / §5 ТЗ.
+ * DataSource for the TypeORM CLI (migrations). §4.1 / §5 of the spec.
  *
- * В приложении подключение настраивается в PostgresModule (TypeOrmModule.forRootAsync)
- * с autoLoadEntities — этот файл нужен ТОЛЬКО для CLI-команд миграций.
+ * In the app, the connection is configured in PostgresModule (TypeOrmModule.forRootAsync)
+ * with autoLoadEntities — this file is needed ONLY for migration CLI commands.
  *
- * Определяем режим по расширению самого модуля:
- *  - dev через tsx  → data-source.ts → globs по src/**.ts
- *  - prod (собрано) → data-source.js → globs по dist/**.js
+ * We detect the mode from the module's own extension:
+ *  - dev via tsx    → data-source.ts → globs over src/**.ts
+ *  - prod (built)   → data-source.js → globs over dist/**.js
  */
 const isTs = import.meta.url.endsWith('.ts');
 const root = isTs ? 'src' : 'dist';
 const ext = isTs ? 'ts' : 'js';
 
-// TypeORM CLI требует РОВНО один экспорт DataSource — только default.
+// TypeORM CLI requires EXACTLY one DataSource export — default only.
 const dataSource = new DataSource({
   type: 'postgres',
   host: process.env.POSTGRES_HOST ?? 'localhost',

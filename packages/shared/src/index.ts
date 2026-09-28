@@ -1,17 +1,17 @@
 /**
- * @crm/shared — единый контракт API между backend (NestJS) и frontend (Angular).
+ * @crm/shared — single API contract between backend (NestJS) and frontend (Angular).
  *
- * Framework-free: НЕ импортирует Nest, Angular или class-validator.
- * Держим всё в одном файле, чтобы под NodeNext ESM не требовались расширения
- * в относительных импортах и не было проблем с резолвом на рантайме Node.
+ * Framework-free: does NOT import Nest, Angular, or class-validator.
+ * Kept all in one file so NodeNext ESM doesn't require extensions
+ * in relative imports and there are no Node runtime resolution issues.
  *
- * Серверные DTO с декораторами class-validator живут в backend/ и здесь не дублируются.
+ * Server-side DTOs with class-validator decorators live in backend/ and aren't duplicated here.
  */
 
-/* ============================ Базовые типы ============================ */
+/* ============================ Base types ============================ */
 
 export type UUID = string;
-/** ISO-8601, напр. "2026-09-27T10:00:00.000Z" */
+/** ISO-8601, e.g. "2026-09-27T10:00:00.000Z" */
 export type ISODateString = string;
 
 export interface BaseEntity {
@@ -21,8 +21,8 @@ export interface BaseEntity {
 }
 
 /* ============================ Enums ============================ */
-// Паттерн: const-объект + одноимённый union-тип — работает и как значение, и как тип,
-// без рантайм-особенностей TS enum и хорошо тришейкается.
+// Pattern: const object + same-named union type — works both as a value and as a type,
+// without TS enum's runtime quirks, and tree-shakes well.
 
 export const OrganizationMemberStatus = {
   Active: 'active',
@@ -83,7 +83,7 @@ export const CommentEntityType = {
 export type CommentEntityType =
   (typeof CommentEntityType)[keyof typeof CommentEntityType];
 
-/* ============================ RBAC: права и роли ============================ */
+/* ============================ RBAC: permissions and roles ============================ */
 
 export const PERMISSIONS = {
   CONTACTS_READ: 'contacts.read',
@@ -131,10 +131,10 @@ export const PERMISSIONS = {
 } as const;
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
-/** Список всех кодов прав (для сидов и проверок). */
+/** List of all permission codes (for seeds and checks). */
 export const ALL_PERMISSIONS: Permission[] = Object.values(PERMISSIONS);
 
-/** Системные роли по умолчанию (сидируются миграцией, не удаляются). */
+/** Default system roles (seeded by migration, never deleted). */
 export const SystemRole = {
   Owner: 'owner',
   Admin: 'admin',
@@ -144,7 +144,7 @@ export const SystemRole = {
 } as const;
 export type SystemRole = (typeof SystemRole)[keyof typeof SystemRole];
 
-/* ============================ Пагинация и сортировка ============================ */
+/* ============================ Pagination and sorting ============================ */
 
 export type SortOrder = 'asc' | 'desc';
 
@@ -181,8 +181,8 @@ export interface CursorPage<T> {
 export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
 
-/* ============================ Формат ошибки API ============================ */
-// Совпадает с конвертом AllExceptionsFilter на backend.
+/* ============================ API error format ============================ */
+// Matches the envelope of AllExceptionsFilter on the backend.
 
 export interface ApiError {
   statusCode: number;
@@ -192,7 +192,7 @@ export interface ApiError {
   errors?: unknown[];
 }
 
-/* ============================ Аутентификация ============================ */
+/* ============================ Authentication ============================ */
 
 export interface AuthTokens {
   accessToken: string;
@@ -212,27 +212,27 @@ export interface RegisterRequest {
   organizationName: string;
 }
 
-/** Полезная нагрузка access-токена (JWT). */
+/** Access token payload (JWT). */
 export interface JwtPayload {
   sub: UUID;
   organizationId: UUID;
   email: string;
 }
 
-/** Результат register/login/refresh. */
+/** Result of register/login/refresh. */
 export interface AuthResult {
   user: UserDto;
   tokens: AuthTokens;
 }
 
-/** Текущая сессия: GET /auth/me. */
+/** Current session: GET /auth/me. */
 export interface SessionInfo {
   user: UserDto;
   organizationId: UUID;
 }
 
-/* ============================ Модели домена ============================ */
-// numeric-поля (деньги) передаём строкой, чтобы не терять точность в JS number.
+/* ============================ Domain models ============================ */
+// numeric fields (money) are passed as strings to avoid losing precision in JS number.
 
 export interface OrganizationDto extends BaseEntity {
   name: string;
@@ -354,7 +354,7 @@ export interface NotificationDto extends BaseEntity {
   readAt: ISODateString | null;
 }
 
-/* ============================ Эндпоинты ============================ */
+/* ============================ Endpoints ============================ */
 
 export const API_PREFIX = '/api/v1';
 
@@ -377,7 +377,7 @@ export const API_ROUTES = {
   health: `${API_PREFIX}/health`,
 } as const;
 
-/* ============================ Конвенции ключей Redis ============================ */
+/* ============================ Redis key conventions ============================ */
 
 export const redisKeys = {
   userPermissions: (orgId: UUID, userId: UUID) =>

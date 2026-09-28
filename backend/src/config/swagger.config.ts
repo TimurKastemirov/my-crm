@@ -1,22 +1,22 @@
 import { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-/** Конфигурация OpenAPI-документа (используется и в рантайме, и в оффлайн-экспорте). */
+/** OpenAPI document configuration (used both at runtime and in offline export). */
 export function buildOpenApiConfig() {
   return new DocumentBuilder()
     .setTitle('CRM API')
     .setDescription(
-      'REST API мультиарендной CRM (NestJS). Базовый префикс — `/api/v1`. ' +
-        'Защищённые эндпоинты требуют Bearer access-token — нажмите «Authorize» и вставьте токен из /auth/login.',
+      'REST API for a multi-tenant CRM (NestJS). Base prefix — `/api/v1`. ' +
+        'Protected endpoints require a Bearer access token — click "Authorize" and paste the token from /auth/login.',
     )
     .setVersion('1.0')
     .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' })
-    .addTag('auth', 'Аутентификация, сессии и токены')
-    .addTag('health', 'Проверки состояния сервиса (liveness / readiness)')
+    .addTag('auth', 'Authentication, sessions and tokens')
+    .addTag('health', 'Service health checks (liveness / readiness)')
     .build();
 }
 
-/** Поднимает Swagger UI на /api/docs и JSON на /api/docs-json. */
+/** Spins up Swagger UI at /api/docs and JSON at /api/docs-json. */
 export function setupSwagger(app: INestApplication): void {
   const document = SwaggerModule.createDocument(app, buildOpenApiConfig());
   SwaggerModule.setup('api/docs', app, document, {

@@ -5,7 +5,7 @@ export class ChangeLeadStatusDto {
   @IsIn(Object.values(LeadStatus))
   status!: LeadStatus;
 
-  /** Обязательна при переводе в 'lost' (проверяется в сервисе). */
+  /** Required when moving to 'lost' (validated in the service). */
   @IsOptional()
   @IsString()
   @MaxLength(255)

@@ -11,7 +11,7 @@ export interface NormalizedPagination {
   skip: number;
 }
 
-/** Нормализует page/limit из query (клипует лимит до MAX_PAGE_SIZE). */
+/** Normalizes page/limit from the query (clips the limit to MAX_PAGE_SIZE). */
 export function normalizePagination(query: PaginationQuery): NormalizedPagination {
   const page = Math.max(1, Number(query.page) || 1);
   const limit = Math.min(
@@ -31,7 +31,7 @@ export function toPaginated<T>(
 }
 
 /**
- * Возвращает безопасное поле сортировки из белого списка (защита от SQL-инъекций через sortBy).
+ * Returns a safe sort field from the allow-list (protects against SQL injection via sortBy).
  */
 export function resolveSort(
   sortBy: string | undefined,

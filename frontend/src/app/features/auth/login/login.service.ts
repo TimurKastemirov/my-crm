@@ -3,7 +3,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/auth.service';
 import { extractErrorMessage } from '../../../core/http-error';
 
-/** Логика экрана входа. Провайдится на уровне LoginComponent (не singleton). */
+/** Login screen logic. Provided at the LoginComponent level (not a singleton). */
 @Injectable()
 export class LoginComponentService {
   private readonly fb = inject(FormBuilder);
@@ -27,7 +27,7 @@ export class LoginComponentService {
     try {
       await this.auth.login(this.form.getRawValue());
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось войти'));
+      this.error.set(extractErrorMessage(e, 'Failed to sign in'));
     } finally {
       this.loading.set(false);
     }

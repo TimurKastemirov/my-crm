@@ -14,7 +14,7 @@ export class OrganizationsService {
     return this.repo.findOne({ where: { id } });
   }
 
-  /** Базовый slug из названия (уникальность обеспечивается при создании). */
+  /** Base slug derived from the name (uniqueness is ensured at creation time). */
   static slugify(name: string): string {
     return (
       name

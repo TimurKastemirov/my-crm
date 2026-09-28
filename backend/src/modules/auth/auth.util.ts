@@ -1,11 +1,11 @@
 /**
- * Парсит длительность вида "15m", "30d", "12h", "45s" в миллисекунды.
- * Используется для срока жизни refresh-токена (expires_at).
+ * Parses a duration like "15m", "30d", "12h", "45s" into milliseconds.
+ * Used for the refresh token lifetime (expires_at).
  */
 export function parseDurationToMs(input: string): number {
   const match = /^(\d+)\s*([smhd])$/.exec(input.trim());
   if (!match) {
-    throw new Error(`Некорректный формат длительности: "${input}" (ожидается напр. 15m, 12h, 30d)`);
+    throw new Error(`Invalid duration format: "${input}" (expected e.g. 15m, 12h, 30d)`);
   }
   const value = Number(match[1]);
   const unit = match[2];

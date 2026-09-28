@@ -30,28 +30,28 @@ export class TasksController {
 
   @Get()
   @RequirePermissions(PERMISSIONS.TASKS_READ)
-  @ApiOperation({ summary: 'Список задач', description: 'Фильтр по статусу/приоритету/исполнителю, поиск, пагинация.' })
+  @ApiOperation({ summary: 'List of tasks', description: 'Filter by status/priority/assignee, search, pagination.' })
   list(@CurrentUser() user: JwtPayload, @Query() query: TaskQueryDto): Promise<Paginated<TaskDto>> {
     return this.tasks.list(user.organizationId, query);
   }
 
   @Get(':id')
   @RequirePermissions(PERMISSIONS.TASKS_READ)
-  @ApiOperation({ summary: 'Задача по id' })
+  @ApiOperation({ summary: 'Task by id' })
   get(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string): Promise<TaskDto> {
     return this.tasks.getById(user.organizationId, id);
   }
 
   @Post()
   @RequirePermissions(PERMISSIONS.TASKS_CREATE)
-  @ApiOperation({ summary: 'Создать задачу' })
+  @ApiOperation({ summary: 'Create task' })
   create(@CurrentUser() user: JwtPayload, @Body() dto: CreateTaskDto): Promise<TaskDto> {
     return this.tasks.create(user.organizationId, user.sub, dto);
   }
 
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.TASKS_UPDATE)
-  @ApiOperation({ summary: 'Обновить задачу', description: 'Смена статуса на done выставляет completedAt.' })
+  @ApiOperation({ summary: 'Update task', description: 'Changing status to done sets completedAt.' })
   update(
     @CurrentUser() user: JwtPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -63,7 +63,7 @@ export class TasksController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermissions(PERMISSIONS.TASKS_DELETE)
-  @ApiOperation({ summary: 'Удалить задачу (soft-delete)' })
+  @ApiOperation({ summary: 'Delete task (soft-delete)' })
   remove(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.tasks.remove(user.organizationId, id);
   }

@@ -6,7 +6,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
 import { setupSwagger } from './config/swagger.config.js';
 
 async function bootstrap() {
-  // ExpressAdapter передаём явно: в ESM-сборке авто-детект HTTP-платформы Nest не срабатывает.
+  // Pass ExpressAdapter explicitly: Nest's HTTP platform auto-detection doesn't work in the ESM build.
   const app = await NestFactory.create(AppModule, new ExpressAdapter());
 
   app.setGlobalPrefix('api/v1');

@@ -34,14 +34,14 @@ export class LeadEntity {
   @Column({ name: 'company_id', type: 'uuid', nullable: true })
   companyId!: string | null;
 
-  // numeric хранится как строка (точность); null — если не задано.
+  // numeric is stored as a string (precision); null if not set.
   @Column({ name: 'estimated_value', type: 'numeric', precision: 18, scale: 2, nullable: true })
   estimatedValue!: string | null;
 
   @Column({ type: 'char', length: 3, nullable: true })
   currency!: string | null;
 
-  // FK на deals появится вместе с модулем Deals.
+  // FK to deals will be added together with the Deals module.
   @Column({ name: 'converted_deal_id', type: 'uuid', nullable: true })
   convertedDealId!: string | null;
 

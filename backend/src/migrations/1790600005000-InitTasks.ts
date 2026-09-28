@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/** Задачи (§6 ТЗ): tasks. */
+/** Tasks (§6 of the spec): tasks. */
 export class InitTasks1790600005000 implements MigrationInterface {
   name = 'InitTasks1790600005000';
 

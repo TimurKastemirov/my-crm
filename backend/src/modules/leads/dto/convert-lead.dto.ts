@@ -1,12 +1,12 @@
 import { IsNumberString, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class ConvertLeadDto {
-  /** Название сделки. */
+  /** Deal title. */
   @IsString()
   @MaxLength(200)
   title!: string;
 
-  /** Воронка/этап; если не заданы — берётся дефолтная воронка и её первый этап. */
+  /** Pipeline/stage; if not provided, the default pipeline and its first stage are used. */
   @IsOptional()
   @IsUUID()
   pipelineId?: string;
@@ -15,7 +15,7 @@ export class ConvertLeadDto {
   @IsUUID()
   stageId?: string;
 
-  /** Сумма сделки; по умолчанию — оценочная сумма лида. */
+  /** Deal amount; defaults to the lead's estimated value. */
   @IsOptional()
   @IsNumberString()
   amount?: string;

@@ -43,7 +43,7 @@ export class AuthService {
       try {
         await firstValueFrom(this.api.post('/auth/logout', { refreshToken }));
       } catch {
-        /* всё равно чистим локально */
+        /* clear locally anyway */
       }
     }
     this.tokens.clear();
@@ -53,9 +53,10 @@ export class AuthService {
   }
 
   /**
-   * Принудительно завершает сессию при 401 от API: чистит токены и состояние
-   * в памяти и уводит на /login. Важно сбросить именно `user`, иначе
-   * guestGuard посчитает пользователя авторизованным и вернёт его с /login.
+   * Forcibly ends the session on a 401 from the API: clears tokens and
+   * in-memory state and redirects to /login. It's important to reset `user`
+   * specifically, otherwise guestGuard will consider the user authenticated
+   * and redirect them away from /login.
    */
   handleUnauthorized(): void {
     this.tokens.clear();
@@ -64,7 +65,7 @@ export class AuthService {
     void this.router.navigate(['/login']);
   }
 
-  /** Гарантирует загруженную сессию для guard'а: возвращает true, если пользователь аутентифицирован. */
+  /** Ensures a loaded session for the guard: returns true if the user is authenticated. */
   async ensureSession(): Promise<boolean> {
     if (this.isAuthenticated()) return true;
     if (!this.tokens.access) return false;

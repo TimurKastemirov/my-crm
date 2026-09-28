@@ -29,7 +29,7 @@ export class RegisterComponentService {
     try {
       await this.auth.register(this.form.getRawValue());
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось зарегистрироваться'));
+      this.error.set(extractErrorMessage(e, 'Failed to register'));
     } finally {
       this.loading.set(false);
     }

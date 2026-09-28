@@ -1,6 +1,6 @@
 import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
 
-/** Назначение роли пользователю в рамках организации. */
+/** Assignment of a role to a user within an organization. */
 @Entity('user_roles')
 export class UserRoleEntity {
   @PrimaryColumn({ name: 'user_id', type: 'uuid' })

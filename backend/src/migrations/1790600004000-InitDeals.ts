@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/** Сделки и воронки (§6 ТЗ): pipelines, pipeline_stages, deals. Плюс FK leads.converted_deal_id → deals. */
+/** Deals and pipelines (§6 of the spec): pipelines, pipeline_stages, deals. Plus FK leads.converted_deal_id → deals. */
 export class InitDeals1790600004000 implements MigrationInterface {
   name = 'InitDeals1790600004000';
 
@@ -83,7 +83,7 @@ export class InitDeals1790600004000 implements MigrationInterface {
       `CREATE INDEX "idx_deals_org_owner_status" ON "deals" ("organization_id", "owner_id", "status")`,
     );
 
-    // Отложенный FK из модуля Leads: converted_deal_id → deals.
+    // Deferred FK from the Leads module: converted_deal_id → deals.
     await q.query(`
       ALTER TABLE "leads" ADD CONSTRAINT "fk_leads_converted_deal"
         FOREIGN KEY ("converted_deal_id") REFERENCES "deals"("id") ON DELETE SET NULL

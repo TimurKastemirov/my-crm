@@ -42,7 +42,7 @@ const MANAGER: Permission[] = [
   PERMISSIONS.DATA_IMPORT,
 ];
 
-/** Набор прав каждой системной роли. Владелец — все права; админ — все, кроме управления организацией. */
+/** Permission set for each system role. Owner has all permissions; admin has all except organization management. */
 export const SYSTEM_ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
   [SystemRole.Owner]: ALL_PERMISSIONS,
   [SystemRole.Admin]: ALL_PERMISSIONS.filter(
@@ -54,9 +54,9 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
 };
 
 export const SYSTEM_ROLE_NAMES: Record<SystemRole, string> = {
-  [SystemRole.Owner]: 'Владелец',
-  [SystemRole.Admin]: 'Администратор',
-  [SystemRole.Manager]: 'Менеджер',
-  [SystemRole.Agent]: 'Сотрудник',
-  [SystemRole.Viewer]: 'Наблюдатель',
+  [SystemRole.Owner]: 'Owner',
+  [SystemRole.Admin]: 'Admin',
+  [SystemRole.Manager]: 'Manager',
+  [SystemRole.Agent]: 'Agent',
+  [SystemRole.Viewer]: 'Viewer',
 };

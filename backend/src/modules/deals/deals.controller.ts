@@ -36,28 +36,28 @@ export class DealsController {
 
   @Get()
   @RequirePermissions(PERMISSIONS.DEALS_READ)
-  @ApiOperation({ summary: 'Список сделок', description: 'Фильтр по воронке/этапу/статусу, поиск, пагинация.' })
+  @ApiOperation({ summary: 'List of deals', description: 'Filter by pipeline/stage/status, search, pagination.' })
   list(@CurrentUser() user: JwtPayload, @Query() query: DealQueryDto): Promise<Paginated<DealDto>> {
     return this.deals.list(user.organizationId, query);
   }
 
   @Get(':id')
   @RequirePermissions(PERMISSIONS.DEALS_READ)
-  @ApiOperation({ summary: 'Сделка по id' })
+  @ApiOperation({ summary: 'Deal by id' })
   get(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string): Promise<DealDto> {
     return this.deals.getById(user.organizationId, id);
   }
 
   @Post()
   @RequirePermissions(PERMISSIONS.DEALS_CREATE)
-  @ApiOperation({ summary: 'Создать сделку' })
+  @ApiOperation({ summary: 'Create deal' })
   create(@CurrentUser() user: JwtPayload, @Body() dto: CreateDealDto): Promise<DealDto> {
     return this.deals.create(user.organizationId, user.sub, dto);
   }
 
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.DEALS_UPDATE)
-  @ApiOperation({ summary: 'Обновить сделку (кроме этапа/статуса)' })
+  @ApiOperation({ summary: 'Update deal (except stage/status)' })
   update(
     @CurrentUser() user: JwtPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -68,7 +68,7 @@ export class DealsController {
 
   @Patch(':id/move-stage')
   @RequirePermissions(PERMISSIONS.DEALS_UPDATE)
-  @ApiOperation({ summary: 'Переместить по этапу (Kanban)', description: 'Статус выводится из флагов этапа (won/lost/open).' })
+  @ApiOperation({ summary: 'Move by stage (Kanban)', description: 'Status is derived from the stage flags (won/lost/open).' })
   moveStage(
     @CurrentUser() user: JwtPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -80,7 +80,7 @@ export class DealsController {
   @Post(':id/win')
   @HttpCode(HttpStatus.OK)
   @RequirePermissions(PERMISSIONS.DEALS_UPDATE)
-  @ApiOperation({ summary: 'Отметить сделку выигранной' })
+  @ApiOperation({ summary: 'Mark deal as won' })
   win(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string): Promise<DealDto> {
     return this.deals.win(user.organizationId, id);
   }
@@ -88,7 +88,7 @@ export class DealsController {
   @Post(':id/lose')
   @HttpCode(HttpStatus.OK)
   @RequirePermissions(PERMISSIONS.DEALS_UPDATE)
-  @ApiOperation({ summary: 'Отметить сделку проигранной' })
+  @ApiOperation({ summary: 'Mark deal as lost' })
   lose(
     @CurrentUser() user: JwtPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -100,7 +100,7 @@ export class DealsController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermissions(PERMISSIONS.DEALS_DELETE)
-  @ApiOperation({ summary: 'Удалить сделку (soft-delete)' })
+  @ApiOperation({ summary: 'Delete deal (soft-delete)' })
   remove(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.deals.remove(user.organizationId, id);
   }

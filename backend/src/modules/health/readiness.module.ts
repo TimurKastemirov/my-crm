@@ -4,8 +4,8 @@ import { ReadinessController } from './readiness.controller.js';
 import { RedisHealthIndicator } from './redis.health.js';
 
 /**
- * Readiness-проверки (PG + Redis). Подключается в AppModule.
- * RedisService приходит из глобального RedisModule; DataSource — из PostgresModule (TypeOrmModule).
+ * Readiness checks (PG + Redis). Wired up in AppModule.
+ * RedisService comes from the global RedisModule; DataSource — from PostgresModule (TypeOrmModule).
  */
 @Module({
   imports: [TerminusModule],

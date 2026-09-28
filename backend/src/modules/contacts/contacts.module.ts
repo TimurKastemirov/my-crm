@@ -11,7 +11,7 @@ import { ContactsController } from './contacts.controller.js';
   imports: [
     SecurityModule,
     RbacModule,
-    // CompanyEntity — для проверки принадлежности companyId организации.
+    // CompanyEntity — for checking that companyId belongs to the organization.
     TypeOrmModule.forFeature([ContactEntity, CompanyEntity]),
   ],
   controllers: [ContactsController],

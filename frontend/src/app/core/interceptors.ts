@@ -4,7 +4,7 @@ import { catchError, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
 import { TokenStorage } from './token-storage';
 
-/** Добавляет Bearer access-token к запросам к API. */
+/** Adds a Bearer access token to API requests. */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const access = inject(TokenStorage).access;
   if (access && req.url.includes('/api/')) {
@@ -13,7 +13,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req);
 };
 
-/** На 401 (кроме самих auth-запросов) завершает сессию и уводит на /login. */
+/** On 401 (except for the auth requests themselves), ends the session and redirects to /login. */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   return next(req).pipe(

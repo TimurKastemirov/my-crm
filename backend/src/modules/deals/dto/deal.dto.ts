@@ -45,7 +45,7 @@ export class CreateDealDto {
   expectedCloseDate?: string;
 }
 
-// pipelineId/stageId/status меняются через move-stage/win/lose, а не через обычный update.
+// pipelineId/stageId/status change via move-stage/win/lose, not through a regular update.
 export class UpdateDealDto extends PartialType(CreateDealDto) {}
 
 export class MoveStageDto {

@@ -3,6 +3,6 @@ import type { Permission } from '@crm/shared';
 
 export const REQUIRE_PERMISSIONS_KEY = 'require_permissions';
 
-/** Помечает роут требуемыми правами. Работает в паре с PermissionsGuard (после JwtAuthGuard). */
+/** Marks a route with required permissions. Works together with PermissionsGuard (after JwtAuthGuard). */
 export const RequirePermissions = (...permissions: Permission[]) =>
   SetMetadata(REQUIRE_PERMISSIONS_KEY, permissions);

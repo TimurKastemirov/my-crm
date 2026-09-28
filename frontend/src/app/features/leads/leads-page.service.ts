@@ -5,11 +5,11 @@ import { extractErrorMessage } from '../../core/http-error';
 import { LeadsApi } from './leads.api';
 
 const STATUS_LABELS: Record<LeadStatus, string> = {
-  new: 'Новый',
-  contacted: 'Контакт',
-  qualified: 'Квалификация',
-  converted: 'Конвертирован',
-  lost: 'Проигран',
+  new: 'New',
+  contacted: 'Contacted',
+  qualified: 'Qualified',
+  converted: 'Converted',
+  lost: 'Lost',
 };
 
 @Injectable()
@@ -56,7 +56,7 @@ export class LeadsPageComponentService {
       this.total.set(res.meta.total);
       this.hasNext.set(res.meta.hasNext);
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось загрузить лиды'));
+      this.error.set(extractErrorMessage(e, 'Failed to load leads'));
     } finally {
       this.loading.set(false);
     }
@@ -118,19 +118,19 @@ export class LeadsPageComponentService {
       this.modalOpen.set(false);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось сохранить'));
+      this.error.set(extractErrorMessage(e, 'Failed to save'));
     } finally {
       this.saving.set(false);
     }
   }
 
-  /** Смена статуса из выпадающего списка (для 'lost' спрашиваем причину). */
+  /** Status change from the dropdown (for 'lost' we ask for a reason). */
   async setStatus(lead: LeadDto, status: string): Promise<void> {
     const next = status as LeadStatus;
     if (next === lead.status) return;
     let lostReason: string | undefined;
     if (next === LeadStatus.Lost) {
-      lostReason = window.prompt('Причина проигрыша?')?.trim() || undefined;
+      lostReason = window.prompt('Reason for the loss?')?.trim() || undefined;
       if (!lostReason) return;
     }
     this.error.set(null);
@@ -138,30 +138,30 @@ export class LeadsPageComponentService {
       await this.api.changeStatus(lead.id, next, lostReason);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось сменить статус'));
+      this.error.set(extractErrorMessage(e, 'Failed to change status'));
     }
   }
 
   async convert(lead: LeadDto): Promise<void> {
-    const title = window.prompt('Название сделки:', `Сделка по лиду`)?.trim();
+    const title = window.prompt('Deal title:', `Deal from lead`)?.trim();
     if (!title) return;
     this.error.set(null);
     try {
       await this.api.convert(lead.id, title);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось конвертировать'));
+      this.error.set(extractErrorMessage(e, 'Failed to convert'));
     }
   }
 
   async remove(lead: LeadDto): Promise<void> {
-    if (!window.confirm('Удалить лид?')) return;
+    if (!window.confirm('Delete lead?')) return;
     this.error.set(null);
     try {
       await this.api.remove(lead.id);
       await this.load();
     } catch (e) {
-      this.error.set(extractErrorMessage(e, 'Не удалось удалить'));
+      this.error.set(extractErrorMessage(e, 'Failed to delete'));
     }
   }
 }

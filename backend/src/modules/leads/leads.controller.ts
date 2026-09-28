@@ -39,28 +39,28 @@ export class LeadsController {
 
   @Get()
   @RequirePermissions(PERMISSIONS.LEADS_READ)
-  @ApiOperation({ summary: 'Список лидов', description: 'Фильтр по статусу, поиск по source, пагинация. Только своя организация.' })
+  @ApiOperation({ summary: 'List of leads', description: 'Filter by status, search by source, pagination. Own organization only.' })
   list(@CurrentUser() user: JwtPayload, @Query() query: LeadQueryDto): Promise<Paginated<LeadDto>> {
     return this.leads.list(user.organizationId, query);
   }
 
   @Get(':id')
   @RequirePermissions(PERMISSIONS.LEADS_READ)
-  @ApiOperation({ summary: 'Лид по id' })
+  @ApiOperation({ summary: 'Lead by id' })
   get(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string): Promise<LeadDto> {
     return this.leads.getById(user.organizationId, id);
   }
 
   @Post()
   @RequirePermissions(PERMISSIONS.LEADS_CREATE)
-  @ApiOperation({ summary: 'Создать лид' })
+  @ApiOperation({ summary: 'Create lead' })
   create(@CurrentUser() user: JwtPayload, @Body() dto: CreateLeadDto): Promise<LeadDto> {
     return this.leads.create(user.organizationId, user.sub, dto);
   }
 
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.LEADS_UPDATE)
-  @ApiOperation({ summary: 'Обновить лид (кроме статуса)' })
+  @ApiOperation({ summary: 'Update lead (except status)' })
   update(
     @CurrentUser() user: JwtPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -72,8 +72,8 @@ export class LeadsController {
   @Patch(':id/status')
   @RequirePermissions(PERMISSIONS.LEADS_UPDATE)
   @ApiOperation({
-    summary: 'Сменить статус лида',
-    description: 'new/contacted/qualified/lost (для lost обязателен lostReason). Статус "converted" — через конвертацию в сделку (модуль Deals).',
+    summary: 'Change lead status',
+    description: 'new/contacted/qualified/lost (lostReason is required for lost). The "converted" status is reached via conversion into a deal (Deals module).',
   })
   changeStatus(
     @CurrentUser() user: JwtPayload,
@@ -86,8 +86,8 @@ export class LeadsController {
   @Post(':id/convert')
   @RequirePermissions(PERMISSIONS.LEADS_CONVERT)
   @ApiOperation({
-    summary: 'Конвертировать лид в сделку',
-    description: 'Создаёт сделку (в дефолтной или указанной воронке) и помечает лид converted.',
+    summary: 'Convert lead into a deal',
+    description: 'Creates a deal (in the default or specified pipeline) and marks the lead as converted.',
   })
   convert(
     @CurrentUser() user: JwtPayload,
@@ -100,7 +100,7 @@ export class LeadsController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermissions(PERMISSIONS.LEADS_DELETE)
-  @ApiOperation({ summary: 'Удалить лид (soft-delete)' })
+  @ApiOperation({ summary: 'Delete lead (soft-delete)' })
   remove(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.leads.remove(user.organizationId, id);
   }

@@ -7,9 +7,9 @@ import {
 } from 'typeorm';
 
 /**
- * Refresh-токен хранится ТОЛЬКО в виде SHA-256-хеша (сырой токен — у клиента).
- * family_id объединяет цепочку ротаций одной сессии: при попытке повторного
- * использования отозванного токена отзывается вся семья (детект компрометации).
+ * Refresh token is stored ONLY as a SHA-256 hash (the raw token stays with the client).
+ * family_id groups the rotation chain of one session: if a revoked token is reused,
+ * the whole family is revoked (compromise detection).
  */
 @Entity('refresh_tokens')
 export class RefreshTokenEntity {

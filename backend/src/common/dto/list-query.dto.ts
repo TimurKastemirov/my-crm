@@ -2,7 +2,7 @@ import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import type { PaginationQuery, SortOrder } from '@crm/shared';
 
-/** Общие query-параметры списковых эндпоинтов: пагинация, поиск, сортировка. */
+/** Common query params for list endpoints: pagination, search, sorting. */
 export class ListQueryDto implements PaginationQuery {
   @IsOptional()
   @Type(() => Number)

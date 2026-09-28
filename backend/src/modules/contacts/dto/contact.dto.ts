@@ -31,7 +31,7 @@ export class CreateContactDto {
   @MaxLength(120)
   position?: string;
 
-  /** Привязка к компании (в той же организации). */
+  /** Link to a company (within the same organization). */
   @IsOptional()
   @IsUUID()
   companyId?: string;

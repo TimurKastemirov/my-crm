@@ -11,8 +11,8 @@ import { RolesService } from '../roles.service.js';
 import { REQUIRE_PERMISSIONS_KEY } from '../decorators/require-permissions.decorator.js';
 
 /**
- * Проверяет права из @RequirePermissions против агрегированных прав пользователя.
- * Требует, чтобы раньше отработал JwtAuthGuard (положил payload в request.user).
+ * Checks the permissions from @RequirePermissions against the user's aggregated permissions.
+ * Requires JwtAuthGuard to have already run (it puts the payload on request.user).
  */
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -35,7 +35,7 @@ export class PermissionsGuard implements CanActivate {
       .getRequest<Request & { user?: JwtPayload }>();
     const user = request.user;
     if (!user) {
-      throw new ForbiddenException('Нет контекста пользователя (нужен JwtAuthGuard)');
+      throw new ForbiddenException('No user context (JwtAuthGuard is required)');
     }
 
     const codes = await this.rolesService.getUserPermissionCodes(
@@ -44,7 +44,7 @@ export class PermissionsGuard implements CanActivate {
     );
     const missing = required.filter((p) => !codes.includes(p));
     if (missing.length) {
-      throw new ForbiddenException(`Недостаточно прав: ${missing.join(', ')}`);
+      throw new ForbiddenException(`Insufficient permissions: ${missing.join(', ')}`);
     }
     return true;
   }

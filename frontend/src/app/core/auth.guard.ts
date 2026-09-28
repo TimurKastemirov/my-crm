@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from './auth.service';
 
-/** Пускает только аутентифицированных; иначе — на /login (с попыткой восстановить сессию по токену). */
+/** Allows only authenticated users through; otherwise redirects to /login (attempting to restore the session from the token). */
 export const authGuard: CanActivateFn = async () => {
   const auth = inject(AuthService);
   const router = inject(Router);
@@ -10,7 +10,7 @@ export const authGuard: CanActivateFn = async () => {
   return ok ? true : router.parseUrl('/login');
 };
 
-/** Для /login и /register: если уже вошли — на дашборд. */
+/** For /login and /register: if already logged in, redirect to the dashboard. */
 export const guestGuard: CanActivateFn = async () => {
   const auth = inject(AuthService);
   const router = inject(Router);

@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1
 #
-# Backend (NestJS). Контекст сборки — КОРЕНЬ монорепо (npm workspaces):
+# Backend (NestJS). Build context is the monorepo ROOT (npm workspaces):
 #   docker build -f backend/Dockerfile -t crm-backend .
 #
-# Примечание по размеру: из-за общего workspace-дерева в node_modules попадают и
-# prod-зависимости frontend (@angular/*). При необходимости слим-образа — бандлить
-# backend через esbuild/ncc или выносить отдельный lockfile. Пока — простота и корректность.
+# Size note: because of the shared workspace tree, node_modules also includes the
+# frontend prod dependencies (@angular/*). For a slim image, bundle the backend via
+# esbuild/ncc or use a separate lockfile. For now — simplicity and correctness.
 
-########## deps: зависимости workspace (нужны все манифесты для npm ci + линковки @crm/shared) ##########
+########## deps: workspace dependencies (all manifests needed for npm ci + @crm/shared linking) ##########
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -16,7 +16,7 @@ COPY backend/package.json ./backend/
 COPY frontend/package.json ./frontend/
 RUN npm ci
 
-########## dev: режим разработки (hot-reload через bind-mount в docker-compose) ##########
+########## dev: development mode (hot-reload via bind-mount in docker-compose) ##########
 FROM deps AS dev
 WORKDIR /app
 COPY packages/shared ./packages/shared
@@ -25,7 +25,7 @@ RUN npm run build -w @crm/shared
 EXPOSE 3000
 CMD ["npm", "run", "start:dev", "-w", "backend"]
 
-########## build: сборка shared + backend и прунинг dev-зависимостей ##########
+########## build: build shared + backend and prune dev dependencies ##########
 FROM deps AS build
 WORKDIR /app
 COPY packages/shared ./packages/shared
@@ -33,7 +33,7 @@ COPY backend ./backend
 RUN npm run build -w @crm/shared && npm run build -w backend
 RUN npm prune --omit=dev
 
-########## runtime: продакшн-образ ##########
+########## runtime: production image ##########
 FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production

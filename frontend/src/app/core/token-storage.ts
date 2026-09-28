@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import type { AuthTokens } from '@crm/shared';
 
 /**
- * Хранит пару токенов в localStorage. Все обращения обёрнуты в try/catch —
- * приватный режим/заблокированный сторедж не должны ронять приложение.
+ * Stores the token pair in localStorage. All accesses are wrapped in try/catch —
+ * private mode/blocked storage should not crash the app.
  */
 @Injectable({ providedIn: 'root' })
 export class TokenStorage {
@@ -31,7 +31,7 @@ export class TokenStorage {
       localStorage.setItem(this.ACCESS, tokens.accessToken);
       localStorage.setItem(this.REFRESH, tokens.refreshToken);
     } catch {
-      /* сторедж недоступен — сессия проживёт в памяти до перезагрузки */
+      /* storage unavailable — the session will live in memory until reload */
     }
   }
 
@@ -40,7 +40,7 @@ export class TokenStorage {
       localStorage.removeItem(this.ACCESS);
       localStorage.removeItem(this.REFRESH);
     } catch {
-      /* игнорируем */
+      /* ignore */
     }
   }
 }

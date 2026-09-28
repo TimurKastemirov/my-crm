@@ -1,8 +1,8 @@
 import type { AuthResult, AuthTokens, SessionInfo, UserDto } from '@crm/shared';
 
 /**
- * Response-DTO для документации Swagger. Классы (а не interface из @crm/shared),
- * чтобы CLI-плагин @nestjs/swagger сгенерировал схемы тел ответов.
+ * Response DTOs for Swagger documentation. Classes (not interfaces from @crm/shared)
+ * so the @nestjs/swagger CLI plugin can generate response body schemas.
  */
 export class UserResponseDto implements UserDto {
   id: string;
@@ -18,9 +18,9 @@ export class UserResponseDto implements UserDto {
 }
 
 export class AuthTokensDto implements AuthTokens {
-  /** JWT access-токен (короткоживущий, для заголовка Authorization). */
+  /** JWT access token (short-lived, for the Authorization header). */
   accessToken: string;
-  /** Opaque refresh-токен (передавать в POST /auth/refresh). */
+  /** Opaque refresh token (pass it to POST /auth/refresh). */
   refreshToken: string;
 }
 
@@ -31,6 +31,6 @@ export class AuthResultDto implements AuthResult {
 
 export class SessionInfoDto implements SessionInfo {
   user: UserResponseDto;
-  /** Активная организация текущей сессии. */
+  /** Active organization of the current session. */
   organizationId: string;
 }

@@ -9,12 +9,12 @@ export class ShellComponentService {
   readonly menuOpen = signal(false);
 
   readonly nav = [
-    { path: '/', label: 'Дашборд' },
-    { path: '/contacts', label: 'Клиенты' },
-    { path: '/companies', label: 'Компании' },
-    { path: '/leads', label: 'Лиды' },
-    { path: '/deals', label: 'Сделки' },
-    { path: '/tasks', label: 'Задачи' },
+    { path: '/', label: 'Dashboard' },
+    { path: '/contacts', label: 'Contacts' },
+    { path: '/companies', label: 'Companies' },
+    { path: '/leads', label: 'Leads' },
+    { path: '/deals', label: 'Deals' },
+    { path: '/tasks', label: 'Tasks' },
   ];
 
   logout(): void {

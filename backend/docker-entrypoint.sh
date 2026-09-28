@@ -1,17 +1,17 @@
 #!/bin/sh
 set -e
 
-# Прогон миграций (компилированный data-source, без tsx — прод-режим).
-# typeorm CLI ищем и в корневом node_modules (hoist), и в backend/node_modules.
+# Run migrations (compiled data-source, no tsx — production mode).
+# Look up the typeorm CLI in both the root node_modules (hoist) and backend/node_modules.
 CLI="/app/node_modules/typeorm/cli.js"
 [ -f "$CLI" ] || CLI="/app/backend/node_modules/typeorm/cli.js"
 
 if [ -f dist/config/data-source.js ]; then
-  echo "→ Применяю миграции..."
+  echo "→ Running migrations..."
   node "$CLI" migration:run -d dist/config/data-source.js
 else
-  echo "→ data-source не найден, миграции пропущены."
+  echo "→ data-source not found, migrations skipped."
 fi
 
-echo "→ Старт приложения..."
+echo "→ Starting application..."
 exec "$@"

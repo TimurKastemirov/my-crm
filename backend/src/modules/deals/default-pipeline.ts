@@ -1,12 +1,12 @@
-/** Дефолтная воронка + этапы, создаётся при регистрации организации. */
+/** Default pipeline + stages, created when an organization registers. */
 export const DEFAULT_PIPELINE = {
-  name: 'Основная воронка',
+  name: 'Default pipeline',
   stages: [
-    { name: 'Новая', probability: 10, isWon: false, isLost: false },
-    { name: 'Квалификация', probability: 25, isWon: false, isLost: false },
-    { name: 'Предложение', probability: 50, isWon: false, isLost: false },
-    { name: 'Переговоры', probability: 75, isWon: false, isLost: false },
-    { name: 'Выиграна', probability: 100, isWon: true, isLost: false },
-    { name: 'Проиграна', probability: 0, isWon: false, isLost: true },
+    { name: 'New', probability: 10, isWon: false, isLost: false },
+    { name: 'Qualification', probability: 25, isWon: false, isLost: false },
+    { name: 'Proposal', probability: 50, isWon: false, isLost: false },
+    { name: 'Negotiation', probability: 75, isWon: false, isLost: false },
+    { name: 'Won', probability: 100, isWon: true, isLost: false },
+    { name: 'Lost', probability: 0, isWon: false, isLost: true },
   ],
 } as const;

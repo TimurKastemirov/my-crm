@@ -31,28 +31,28 @@ export class CompaniesController {
 
   @Get()
   @RequirePermissions(PERMISSIONS.COMPANIES_READ)
-  @ApiOperation({ summary: 'Список компаний', description: 'Пагинация, поиск, сортировка. Только своя организация.' })
+  @ApiOperation({ summary: 'List of companies', description: 'Pagination, search, sorting. Own organization only.' })
   list(@CurrentUser() user: JwtPayload, @Query() query: ListQueryDto): Promise<Paginated<CompanyDto>> {
     return this.companies.list(user.organizationId, query);
   }
 
   @Get(':id')
   @RequirePermissions(PERMISSIONS.COMPANIES_READ)
-  @ApiOperation({ summary: 'Компания по id' })
+  @ApiOperation({ summary: 'Company by id' })
   get(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string): Promise<CompanyDto> {
     return this.companies.getById(user.organizationId, id);
   }
 
   @Post()
   @RequirePermissions(PERMISSIONS.COMPANIES_CREATE)
-  @ApiOperation({ summary: 'Создать компанию' })
+  @ApiOperation({ summary: 'Create company' })
   create(@CurrentUser() user: JwtPayload, @Body() dto: CreateCompanyDto): Promise<CompanyDto> {
     return this.companies.create(user.organizationId, user.sub, dto);
   }
 
   @Patch(':id')
   @RequirePermissions(PERMISSIONS.COMPANIES_UPDATE)
-  @ApiOperation({ summary: 'Обновить компанию' })
+  @ApiOperation({ summary: 'Update company' })
   update(
     @CurrentUser() user: JwtPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -64,7 +64,7 @@ export class CompaniesController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RequirePermissions(PERMISSIONS.COMPANIES_DELETE)
-  @ApiOperation({ summary: 'Удалить компанию (soft-delete)' })
+  @ApiOperation({ summary: 'Delete company (soft-delete)' })
   remove(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.companies.remove(user.organizationId, id);
   }

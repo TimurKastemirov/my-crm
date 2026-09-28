@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/** Лиды (§6 ТЗ). FK на deals добавится вместе с модулем Deals. */
+/** Leads (§6 of the spec). FK to deals will be added along with the Deals module. */
 export class InitLeads1790600003000 implements MigrationInterface {
   name = 'InitLeads1790600003000';
 

@@ -5,9 +5,9 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { parseDurationToMs } from '../auth/auth.util.js';
 
 /**
- * Общий модуль безопасности: настройка JwtModule (подпись access-токенов) и JwtAuthGuard.
- * Импортируется и AuthModule, и RbacModule — чтобы не дублировать конфиг JWT и не ловить
- * циклическую зависимость между модулями.
+ * Shared security module: JwtModule setup (access token signing) and JwtAuthGuard.
+ * Imported by both AuthModule and RbacModule — to avoid duplicating the JWT config and
+ * avoid a circular dependency between modules.
  */
 @Module({
   imports: [

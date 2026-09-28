@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-/** Тонкая обёртка над HttpClient с базовым префиксом /api/v1. */
+/** Thin wrapper over HttpClient with the base prefix /api/v1. */
 @Injectable({ providedIn: 'root' })
 export class ApiClient {
   private readonly http = inject(HttpClient);

@@ -14,7 +14,7 @@ import { LeadsController } from './leads.controller.js';
     SecurityModule,
     RbacModule,
     DealsModule,
-    // Contact/Company — для проверки принадлежности связей организации.
+    // Contact/Company — to verify that linked records belong to the organization.
     TypeOrmModule.forFeature([LeadEntity, ContactEntity, CompanyEntity]),
   ],
   controllers: [LeadsController],

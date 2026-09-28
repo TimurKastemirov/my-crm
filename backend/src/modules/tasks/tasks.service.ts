@@ -101,13 +101,13 @@ export class TasksService {
       where: { organizationId, userId: assigneeId, status: OrganizationMemberStatus.Active },
     });
     if (!member) {
-      throw new BadRequestException('Исполнитель не найден среди активных участников организации');
+      throw new BadRequestException('Assignee not found among the active members of the organization');
     }
   }
 
   private async mustFind(organizationId: string, id: string): Promise<TaskEntity> {
     const entity = await this.repo.findOne({ where: { id, organizationId } });
-    if (!entity) throw new NotFoundException('Задача не найдена');
+    if (!entity) throw new NotFoundException('Task not found');
     return entity;
   }
 

@@ -47,11 +47,11 @@ export class AuthService {
     private readonly refreshRepo: Repository<RefreshTokenEntity>,
   ) {}
 
-  /** Регистрация: создаёт пользователя + организацию + членство (владелец) атомарно. */
+  /** Registration: creates a user + organization + membership (owner) atomically. */
   async register(dto: RegisterDto, meta: RequestMeta): Promise<AuthResult> {
     const email = dto.email.trim().toLowerCase();
     if (await this.usersService.findByEmail(email)) {
-      throw new ConflictException('Пользователь с таким email уже существует');
+      throw new ConflictException('A user with this email already exists');
     }
 
     const passwordHash = await argonHash(dto.password);
@@ -88,9 +88,9 @@ export class AuthService {
           }),
         );
 
-        // Системные роли организации + назначение владельца (в той же транзакции).
+        // Organization's system roles + owner assignment (within the same transaction).
         await this.rolesService.provisionOrganization(manager, org.id, createdUser.id);
-        // Дефолтная воронка продаж со стадиями.
+        // Default sales pipeline with stages.
         await this.pipelinesService.provisionDefault(manager, org.id);
 
         return { user: createdUser, organizationId: org.id };
@@ -101,20 +101,20 @@ export class AuthService {
     return { user: this.toUserDto(user), tokens };
   }
 
-  /** Логин по email + паролю. Активная организация — первое активное членство. */
+  /** Login by email + password. The active organization is the first active membership. */
   async login(dto: LoginDto, meta: RequestMeta): Promise<AuthResult> {
     const user = await this.usersService.findByEmail(dto.email);
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Неверный email или пароль');
+      throw new UnauthorizedException('Invalid email or password');
     }
     const passwordOk = await argonVerify(user.passwordHash, dto.password);
     if (!passwordOk) {
-      throw new UnauthorizedException('Неверный email или пароль');
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     const organizationId = await this.primaryOrganizationId(user.id);
     if (!organizationId) {
-      throw new UnauthorizedException('У пользователя нет активной организации');
+      throw new UnauthorizedException('The user has no active organization');
     }
 
     await this.usersService.updateLastLogin(user.id);
@@ -122,38 +122,38 @@ export class AuthService {
     return { user: this.toUserDto(user), tokens };
   }
 
-  /** Ротация refresh-токена с детектом повторного использования. */
+  /** Refresh token rotation with reuse detection. */
   async refresh(rawToken: string, meta: RequestMeta): Promise<AuthTokens> {
     const tokenHash = this.hashToken(rawToken);
     const record = await this.refreshRepo.findOne({ where: { tokenHash } });
     if (!record) {
-      throw new UnauthorizedException('Недействительный refresh-токен');
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
-    // Повторное использование уже отозванного токена → компрометация: гасим всю семью.
+    // Reuse of an already revoked token → compromise: revoke the entire family.
     if (record.revokedAt) {
       await this.refreshRepo.update(
         { familyId: record.familyId },
         { revokedAt: new Date() },
       );
-      throw new UnauthorizedException('Обнаружено повторное использование токена');
+      throw new UnauthorizedException('Token reuse detected');
     }
     if (record.expiresAt.getTime() < Date.now()) {
-      throw new UnauthorizedException('Refresh-токен истёк');
+      throw new UnauthorizedException('Refresh token expired');
     }
 
     const user = await this.usersService.findById(record.userId);
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Пользователь недоступен');
+      throw new UnauthorizedException('User is unavailable');
     }
 
-    // Ротация: отзываем текущий и выпускаем новый в той же семье.
+    // Rotation: revoke the current token and issue a new one in the same family.
     record.revokedAt = new Date();
     await this.refreshRepo.save(record);
     return this.issueTokens(user, record.organizationId, record.familyId, meta);
   }
 
-  /** Выход: отзыв конкретного refresh-токена. */
+  /** Logout: revoke a specific refresh token. */
   async logout(rawToken: string): Promise<void> {
     await this.refreshRepo.update(
       { tokenHash: this.hashToken(rawToken), revokedAt: IsNull() },
@@ -161,7 +161,7 @@ export class AuthService {
     );
   }
 
-  /** Выход со всех устройств: отзыв всех активных токенов пользователя. */
+  /** Logout from all devices: revoke all of the user's active tokens. */
   async logoutAll(userId: string): Promise<void> {
     await this.refreshRepo.update(
       { userId, revokedAt: IsNull() },
@@ -169,11 +169,11 @@ export class AuthService {
     );
   }
 
-  /** Текущая сессия. */
+  /** Current session. */
   async me(payload: JwtPayload): Promise<SessionInfo> {
     const user = await this.usersService.findById(payload.sub);
     if (!user) {
-      throw new UnauthorizedException('Пользователь не найден');
+      throw new UnauthorizedException('User not found');
     }
     return { user: this.toUserDto(user), organizationId: payload.organizationId };
   }

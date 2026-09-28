@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/** Ядро CRM (§6 ТЗ): companies, contacts. */
+/** CRM core (§6 of the spec): companies, contacts. */
 export class InitCrmCore1790600002000 implements MigrationInterface {
   name = 'InitCrmCore1790600002000';
 

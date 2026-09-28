@@ -28,7 +28,7 @@ export class CreateLeadDto {
   @IsUUID()
   companyId?: string;
 
-  /** Оценочная сумма (numeric строкой, чтобы не терять точность). */
+  /** Estimated value (numeric as a string, to avoid losing precision). */
   @IsOptional()
   @IsNumberString()
   estimatedValue?: string;

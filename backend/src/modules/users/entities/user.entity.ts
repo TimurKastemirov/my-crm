@@ -13,7 +13,7 @@ export class UserEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  // email хранится в нижнем регистре; уникальность — глобальная.
+  // email is stored in lowercase; uniqueness is global.
   @Index('uq_users_email', { unique: true })
   @Column({ type: 'varchar', length: 255 })
   email!: string;

@@ -90,12 +90,12 @@ export class DealsService {
     if (dto.contactId !== undefined) entity.contactId = dto.contactId ?? null;
     if (dto.companyId !== undefined) entity.companyId = dto.companyId ?? null;
     if (dto.expectedCloseDate !== undefined) entity.expectedCloseDate = dto.expectedCloseDate ?? null;
-    // pipeline/stage/status меняются через move-stage / win / lose.
+    // pipeline/stage/status change via move-stage / win / lose.
     await this.repo.save(entity);
     return this.toDto(entity);
   }
 
-  /** Перемещение по этапам (Kanban). Статус выводится из флагов целевого этапа. */
+  /** Move between stages (Kanban). Status is derived from the target stage's flags. */
   async moveStage(organizationId: string, id: string, stageId: string): Promise<DealDto> {
     const deal = await this.mustFind(organizationId, id);
     const stage = await this.assertStage(organizationId, deal.pipelineId, stageId);
@@ -144,7 +144,7 @@ export class DealsService {
     stageId: string,
   ): Promise<PipelineStageEntity> {
     const stage = await this.stageRepo.findOne({ where: { id: stageId, pipelineId, organizationId } });
-    if (!stage) throw new BadRequestException('Этап не найден в указанной воронке организации');
+    if (!stage) throw new BadRequestException('Stage not found in the specified pipeline of the organization');
     return stage;
   }
 
@@ -155,17 +155,17 @@ export class DealsService {
   ): Promise<void> {
     if (contactId) {
       const c = await this.contactRepo.findOne({ where: { id: contactId, organizationId } });
-      if (!c) throw new BadRequestException('Контакт не найден в организации');
+      if (!c) throw new BadRequestException('Contact not found in the organization');
     }
     if (companyId) {
       const c = await this.companyRepo.findOne({ where: { id: companyId, organizationId } });
-      if (!c) throw new BadRequestException('Компания не найдена в организации');
+      if (!c) throw new BadRequestException('Company not found in the organization');
     }
   }
 
   private async mustFind(organizationId: string, id: string): Promise<DealEntity> {
     const entity = await this.repo.findOne({ where: { id, organizationId } });
-    if (!entity) throw new NotFoundException('Сделка не найдена');
+    if (!entity) throw new NotFoundException('Deal not found');
     return entity;
   }
 

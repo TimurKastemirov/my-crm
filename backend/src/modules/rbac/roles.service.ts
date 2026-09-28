@@ -38,8 +38,8 @@ export class RolesService {
   ) {}
 
   /**
-   * Провижининг новой организации: создаёт системные роли с их правами и назначает
-   * владельца. Вызывается внутри транзакции регистрации (общий EntityManager).
+   * Provisioning for a new organization: creates system roles with their permissions and
+   * assigns the owner. Called inside the registration transaction (shared EntityManager).
    */
   async provisionOrganization(
     manager: EntityManager,
@@ -80,7 +80,7 @@ export class RolesService {
     }
   }
 
-  /** Агрегированные коды прав пользователя в организации (с кэшем в Redis). */
+  /** Aggregated permission codes of a user in an organization (cached in Redis). */
   async getUserPermissionCodes(
     userId: string,
     organizationId: string,
@@ -91,7 +91,7 @@ export class RolesService {
       try {
         return JSON.parse(cached) as string[];
       } catch {
-        // повреждённый кэш — пересчитаем ниже
+        // corrupted cache — recompute below
       }
     }
 
@@ -139,7 +139,7 @@ export class RolesService {
       where: { organizationId, code: dto.code },
     });
     if (exists) {
-      throw new ConflictException(`Роль с кодом "${dto.code}" уже существует`);
+      throw new ConflictException(`A role with the code "${dto.code}" already exists`);
     }
     const role = await this.roleRepo.save(
       this.roleRepo.create({
@@ -165,10 +165,10 @@ export class RolesService {
   ): Promise<RoleDto> {
     const role = await this.roleRepo.findOne({ where: { id, organizationId } });
     if (!role) {
-      throw new NotFoundException('Роль не найдена');
+      throw new NotFoundException('Role not found');
     }
     if (role.isSystem) {
-      throw new ForbiddenException('Системную роль изменять нельзя');
+      throw new ForbiddenException('A system role cannot be modified');
     }
     if (dto.name !== undefined) role.name = dto.name;
     if (dto.description !== undefined) role.description = dto.description;
@@ -187,19 +187,19 @@ export class RolesService {
     } else {
       codes = await this.permissionCodesForRole(role.id);
     }
-    // Права роли изменились — кэши пользователей обновятся по TTL (см. PERMISSION_CACHE_TTL_SECONDS).
+    // Role permissions changed — user caches will refresh via TTL (see PERMISSION_CACHE_TTL_SECONDS).
     return this.toRoleDto(role, codes);
   }
 
   async deleteRole(organizationId: string, id: string): Promise<void> {
     const role = await this.roleRepo.findOne({ where: { id, organizationId } });
     if (!role) {
-      throw new NotFoundException('Роль не найдена');
+      throw new NotFoundException('Role not found');
     }
     if (role.isSystem) {
-      throw new ForbiddenException('Системную роль удалять нельзя');
+      throw new ForbiddenException('A system role cannot be deleted');
     }
-    // FK ON DELETE CASCADE уберут role_permissions и user_roles.
+    // FK ON DELETE CASCADE will remove role_permissions and user_roles.
     await this.roleRepo.delete({ id: role.id });
   }
 
@@ -216,7 +216,7 @@ export class RolesService {
     if (permissions.length !== unique.length) {
       const found = new Set(permissions.map((p) => p.code));
       const unknown = unique.filter((c) => !found.has(c));
-      throw new BadRequestException(`Неизвестные коды прав: ${unknown.join(', ')}`);
+      throw new BadRequestException(`Unknown permission codes: ${unknown.join(', ')}`);
     }
     return permissions;
   }

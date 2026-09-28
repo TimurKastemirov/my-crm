@@ -66,7 +66,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  /** Пинг для health-проверки. Бросает исключение, если соединение недоступно. */
+  /** Ping for health checks. Throws if the connection is unavailable. */
   async ping(): Promise<boolean> {
     const res = await this.redisClient.ping();
     return res === 'PONG';

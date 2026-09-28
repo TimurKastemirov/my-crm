@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 
-/** Временная заглушка раздела до реализации экрана. */
+/** Temporary placeholder for the section until the screen is implemented. */
 @Component({
   selector: 'app-placeholder',
   templateUrl: './placeholder.html',

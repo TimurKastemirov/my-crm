@@ -6,23 +6,23 @@ import { AppModule } from './app.module.js';
 import { buildOpenApiConfig } from './config/swagger.config.js';
 
 /**
- * Оффлайн-экспорт OpenAPI-спеки в openapi.json (для клиентской кодогенерации и ревью).
- * Preview-режим не инстанцирует провайдеры и не подключается к БД/Redis.
- * Запуск: npm run openapi (backend).
+ * Offline export of the OpenAPI spec to openapi.json (for client codegen and review).
+ * Preview mode doesn't instantiate providers and doesn't connect to the DB/Redis.
+ * Run: npm run openapi (backend).
  */
 async function generate(): Promise<void> {
-  // preview: не инстанцируем провайдеры (нет коннекта к БД/Redis).
-  // ExpressAdapter передаём явно — иначе в preview нет HTTP-драйвера для сканера маршрутов.
+  // preview: providers aren't instantiated (no DB/Redis connection).
+  // Pass ExpressAdapter explicitly — otherwise there's no HTTP driver for the route scanner in preview.
   const app = await NestFactory.create(AppModule, new ExpressAdapter(), {
     preview: true,
     logger: false,
   });
-  app.setGlobalPrefix('api/v1'); // чтобы пути в спеке совпадали с рантаймом (/api/v1/...)
+  app.setGlobalPrefix('api/v1'); // so spec paths match runtime (/api/v1/...)
   const document = SwaggerModule.createDocument(app, buildOpenApiConfig());
   writeFileSync('openapi.json', JSON.stringify(document, null, 2));
   const paths = Object.keys(document.paths ?? {});
   // eslint-disable-next-line no-console
-  console.log(`OpenAPI сгенерирован: ${paths.length} путей → openapi.json`);
+  console.log(`OpenAPI generated: ${paths.length} paths → openapi.json`);
   await app.close();
 }
 

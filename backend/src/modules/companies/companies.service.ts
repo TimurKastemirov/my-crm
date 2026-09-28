@@ -86,7 +86,7 @@ export class CompaniesService {
 
   private async mustFind(organizationId: string, id: string): Promise<CompanyEntity> {
     const entity = await this.repo.findOne({ where: { id, organizationId } });
-    if (!entity) throw new NotFoundException('Компания не найдена');
+    if (!entity) throw new NotFoundException('Company not found');
     return entity;
   }
 

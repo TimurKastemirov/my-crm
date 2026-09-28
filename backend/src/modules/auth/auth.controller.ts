@@ -43,13 +43,13 @@ export class AuthController {
   @Post('register')
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiOperation({
-    summary: 'Регистрация',
+    summary: 'Register',
     description:
-      'Создаёт пользователя, новую организацию и членство-владельца, возвращает пару токенов.',
+      'Creates a user, a new organization and an owner membership, and returns a token pair.',
   })
-  @ApiCreatedResponse({ type: AuthResultDto, description: 'Пользователь и организация созданы' })
-  @ApiConflictResponse({ description: 'Пользователь с таким email уже существует' })
-  @ApiTooManyRequestsResponse({ description: 'Превышен лимит запросов' })
+  @ApiCreatedResponse({ type: AuthResultDto, description: 'User and organization created' })
+  @ApiConflictResponse({ description: 'A user with this email already exists' })
+  @ApiTooManyRequestsResponse({ description: 'Rate limit exceeded' })
   register(@Body() dto: RegisterDto, @Req() req: Request): Promise<AuthResult> {
     return this.auth.register(dto, this.meta(req));
   }
@@ -57,10 +57,10 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  @ApiOperation({ summary: 'Вход', description: 'Аутентификация по email и паролю.' })
-  @ApiOkResponse({ type: AuthResultDto, description: 'Успешный вход' })
-  @ApiUnauthorizedResponse({ description: 'Неверный email или пароль' })
-  @ApiTooManyRequestsResponse({ description: 'Превышен лимит запросов' })
+  @ApiOperation({ summary: 'Log in', description: 'Authentication by email and password.' })
+  @ApiOkResponse({ type: AuthResultDto, description: 'Successful login' })
+  @ApiUnauthorizedResponse({ description: 'Invalid email or password' })
+  @ApiTooManyRequestsResponse({ description: 'Rate limit exceeded' })
   login(@Body() dto: LoginDto, @Req() req: Request): Promise<AuthResult> {
     return this.auth.login(dto, this.meta(req));
   }
@@ -69,20 +69,20 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @ApiOperation({
-    summary: 'Обновление токенов',
+    summary: 'Refresh tokens',
     description:
-      'Ротация refresh-токена: выдаёт новую пару, старый refresh отзывается. При повторном использовании отозванного токена гасится вся сессия.',
+      'Refresh token rotation: issues a new pair, the old refresh token is revoked. Reusing a revoked token terminates the entire session.',
   })
-  @ApiOkResponse({ type: AuthTokensDto, description: 'Новая пара токенов' })
-  @ApiUnauthorizedResponse({ description: 'Недействительный, отозванный или просроченный токен' })
+  @ApiOkResponse({ type: AuthTokensDto, description: 'New token pair' })
+  @ApiUnauthorizedResponse({ description: 'Invalid, revoked, or expired token' })
   refresh(@Body() dto: RefreshDto, @Req() req: Request): Promise<AuthTokens> {
     return this.auth.refresh(dto.refreshToken, this.meta(req));
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Выход', description: 'Отзывает переданный refresh-токен.' })
-  @ApiNoContentResponse({ description: 'Токен отозван' })
+  @ApiOperation({ summary: 'Log out', description: 'Revokes the given refresh token.' })
+  @ApiNoContentResponse({ description: 'Token revoked' })
   async logout(@Body() dto: RefreshDto): Promise<void> {
     await this.auth.logout(dto.refreshToken);
   }
@@ -92,11 +92,11 @@ export class AuthController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
-    summary: 'Выход со всех устройств',
-    description: 'Отзывает все активные refresh-токены текущего пользователя.',
+    summary: 'Log out from all devices',
+    description: "Revokes all of the current user's active refresh tokens.",
   })
-  @ApiNoContentResponse({ description: 'Все токены отозваны' })
-  @ApiUnauthorizedResponse({ description: 'Требуется валидный access-token' })
+  @ApiNoContentResponse({ description: 'All tokens revoked' })
+  @ApiUnauthorizedResponse({ description: 'A valid access token is required' })
   async logoutAll(@CurrentUser() user: JwtPayload): Promise<void> {
     await this.auth.logoutAll(user.sub);
   }
@@ -104,9 +104,9 @@ export class AuthController {
   @Get('me')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Текущая сессия', description: 'Возвращает профиль и активную организацию.' })
-  @ApiOkResponse({ type: SessionInfoDto, description: 'Данные текущей сессии' })
-  @ApiUnauthorizedResponse({ description: 'Требуется валидный access-token' })
+  @ApiOperation({ summary: 'Current session', description: 'Returns the profile and active organization.' })
+  @ApiOkResponse({ type: SessionInfoDto, description: 'Current session data' })
+  @ApiUnauthorizedResponse({ description: 'A valid access token is required' })
   me(@CurrentUser() user: JwtPayload): Promise<SessionInfo> {
     return this.auth.me(user);
   }

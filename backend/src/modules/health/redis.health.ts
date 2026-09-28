@@ -6,8 +6,8 @@ import {
 import { RedisService } from '../../config/redis/redis.service.js';
 
 /**
- * Кастомный health-индикатор Redis (§8.3 / §10.4 ТЗ).
- * Использует HealthIndicatorService из terminus 12.
+ * Custom Redis health indicator (spec §8.3 / §10.4).
+ * Uses HealthIndicatorService from terminus 12.
  */
 @Injectable()
 export class RedisHealthIndicator {
