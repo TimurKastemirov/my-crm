@@ -3,6 +3,7 @@ import { AuthService } from '../../../core/auth.service';
 import { LocaleService } from '../../../core/locale.service';
 import { UsersApi } from '../../../core/users.api';
 
+/** Language switch business logic. Provided at the LanguageSwitcherComponent level (not a singleton). */
 @Injectable()
 export class LanguageSwitcherComponentService {
   private readonly locale = inject(LocaleService);
@@ -12,6 +13,7 @@ export class LanguageSwitcherComponentService {
   readonly current = this.locale.lang;
   readonly options = this.locale.available;
 
+  /** Applies the chosen language and, for signed-in users, persists it to their profile. */
   change(value: string): void {
     if (!this.locale.isSupported(value)) return;
     this.locale.apply(value);

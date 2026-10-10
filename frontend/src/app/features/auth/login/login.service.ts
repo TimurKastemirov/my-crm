@@ -1,37 +1,22 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import type { LoginRequest } from '@crm/shared';
 import { AuthService } from '../../../core/auth.service';
 import { extractErrorMessage } from '../../../core/http-error';
 
-/** Login screen logic. Provided at the LoginComponent level (not a singleton). */
+/** Login business logic. Provided at the LoginComponent level (not a singleton). */
 @Injectable()
 export class LoginComponentService {
-  private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly translate = inject(TranslateService);
 
-  readonly loading = signal(false);
-  readonly error = signal<string | null>(null);
+  /** Authenticates the user and, on success, bootstraps their session. */
+  login(credentials: LoginRequest): Promise<void> {
+    return this.auth.login(credentials);
+  }
 
-  readonly form = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(8)]],
-  });
-
-  async submit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this.loading.set(true);
-    this.error.set(null);
-    try {
-      await this.auth.login(this.form.getRawValue());
-    } catch (e) {
-      this.error.set(extractErrorMessage(e, this.translate.instant('auth.failedSignIn')));
-    } finally {
-      this.loading.set(false);
-    }
+  /** Turns a failed sign-in into a user-facing message. */
+  toErrorMessage(error: unknown): string {
+    return extractErrorMessage(error, this.translate.instant('auth.failedSignIn'));
   }
 }

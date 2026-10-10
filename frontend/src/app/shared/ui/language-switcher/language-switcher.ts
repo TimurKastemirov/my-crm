@@ -9,5 +9,14 @@ import { LanguageSwitcherComponentService } from './language-switcher.service';
   providers: [LanguageSwitcherComponentService],
 })
 export class LanguageSwitcherComponent {
-  protected readonly vm = inject(LanguageSwitcherComponentService);
+  private readonly service = inject(LanguageSwitcherComponentService);
+
+  /** Current language and the available options, read by the template. */
+  protected readonly current = this.service.current;
+  protected readonly options = this.service.options;
+
+  /** Change callback from the `<select>`. */
+  protected change(value: string): void {
+    this.service.change(value);
+  }
 }

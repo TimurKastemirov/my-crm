@@ -70,10 +70,12 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 
 - **Every component lives in its own folder** (e.g. `features/auth/login/`).
 - **Template in a separate `.html` file** next to the component, wired via `templateUrl: './x.html'` — no inline templates.
-- **Keep component logic in a dedicated `XxxComponentService`**, not in the component class. Provide it via `providers: [XxxComponentService]` in the `@Component` decorator (per-component instance, not a root singleton).
+- **Pair every component with a dedicated `XxxComponentService`**, provided via `providers: [XxxComponentService]` in the `@Component` decorator (per-component instance, not a root singleton).
 - **Naming:** `LoginComponent` + `LoginComponentService`.
-- `XxxComponentService` injects the API services (`ApiClient` / domain `*Api`) for backend calls.
-- The component stays thin: `protected readonly vm = inject(XxxComponentService)`, and the template reads `vm.*`.
+- **Split responsibilities between the two:**
+  - **The component (controller) owns everything the template touches**: the reactive form, every signal the template binds to (data, filters, loader/UI state such as `loading`/`error`/`saving`, modal state), and every callback the template invokes. Callbacks stay thin — they manage loader state, run UI dialogs (`confirm`/`prompt`), and delegate the real work to the service.
+  - **The `XxxComponentService` owns business logic only**: calls to the API layer (`ApiClient` / domain `*Api`), request/response and form→DTO mapping, domain rules/predicates, and error-message mapping (`extractErrorMessage` + i18n fallback). It exposes plain methods and holds **no** view state (no form, no template-bound signals). The component injects it as `private readonly service = inject(XxxComponentService)`. The component never injects an `*Api` directly — the service is the only place that touches the data layer.
+  - **The template binds to component members directly** (`form`, `loading()`, `save()`), never through a `vm.*` facade. All template-referenced members are `protected`.
 - Purely presentational components without logic (modal, paginator) don't need a service.
 
 ## Forms (required in this project)

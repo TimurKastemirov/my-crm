@@ -10,5 +10,8 @@ import { DashboardComponentService } from './dashboard.service';
   providers: [DashboardComponentService],
 })
 export class DashboardComponent {
-  protected readonly vm = inject(DashboardComponentService);
+  private readonly service = inject(DashboardComponentService);
+
+  /** Current user, read by the template. */
+  protected readonly user = this.service.user;
 }

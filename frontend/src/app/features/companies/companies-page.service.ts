@@ -1,120 +1,36 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
-import type { CompanyDto } from '@crm/shared';
+import { Injectable, inject } from '@angular/core';
+import type { CompanyDto, Paginated } from '@crm/shared';
 import { TranslateService } from '@ngx-translate/core';
 import { extractErrorMessage } from '../../core/http-error';
-import { CompaniesApi } from './companies.api';
+import { CompaniesApi, type CompanyInput, type ListParams } from './companies.api';
 
+/** Companies business logic. Provided at the CompaniesPageComponent level (not a singleton). */
 @Injectable()
 export class CompaniesPageComponentService {
   private readonly api = inject(CompaniesApi);
-  private readonly fb = inject(FormBuilder);
   private readonly translate = inject(TranslateService);
 
-  readonly items = signal<CompanyDto[]>([]);
-  readonly total = signal(0);
-  readonly hasNext = signal(false);
-  readonly page = signal(1);
-  readonly search = signal('');
-  readonly loading = signal(false);
-  readonly error = signal<string | null>(null);
-
-  readonly modalOpen = signal(false);
-  readonly editingId = signal<string | null>(null);
-  readonly saving = signal(false);
-
-  readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.maxLength(160)]],
-    website: [''],
-    industry: [''],
-    size: [''],
-  });
-
-  constructor() {
-    void this.load();
+  list(params: ListParams): Promise<Paginated<CompanyDto>> {
+    return this.api.list(params);
   }
 
-  async load(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
-    try {
-      const res = await this.api.list({ page: this.page(), limit: 20, search: this.search() || undefined });
-      this.items.set(res.data);
-      this.total.set(res.meta.total);
-      this.hasNext.set(res.meta.hasNext);
-    } catch (e) {
-      this.error.set(extractErrorMessage(e, this.translate.instant('companies.loadError')));
-    } finally {
-      this.loading.set(false);
-    }
+  /** Creates (no id) or updates a company from the form value. */
+  save(id: string | null, value: { name: string; website: string; industry: string; size: string }): Promise<CompanyDto> {
+    const body: CompanyInput = {
+      name: value.name,
+      website: value.website || undefined,
+      industry: value.industry || undefined,
+      size: value.size || undefined,
+    };
+    return id ? this.api.update(id, body) : this.api.create(body);
   }
 
-  applySearch(value: string): void {
-    this.search.set(value.trim());
-    this.page.set(1);
-    void this.load();
+  remove(id: string): Promise<void> {
+    return this.api.remove(id);
   }
 
-  goPage(page: number): void {
-    this.page.set(page);
-    void this.load();
-  }
-
-  openCreate(): void {
-    this.editingId.set(null);
-    this.form.reset({ name: '', website: '', industry: '', size: '' });
-    this.modalOpen.set(true);
-  }
-
-  openEdit(c: CompanyDto): void {
-    this.editingId.set(c.id);
-    this.form.setValue({
-      name: c.name,
-      website: c.website ?? '',
-      industry: c.industry ?? '',
-      size: c.size ?? '',
-    });
-    this.modalOpen.set(true);
-  }
-
-  async save(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this.saving.set(true);
-    this.error.set(null);
-    try {
-      const v = this.form.getRawValue();
-      const body = {
-        name: v.name,
-        website: v.website || undefined,
-        industry: v.industry || undefined,
-        size: v.size || undefined,
-      };
-      const id = this.editingId();
-      if (id) {
-        await this.api.update(id, body);
-      } else {
-        await this.api.create(body);
-      }
-      this.modalOpen.set(false);
-      await this.load();
-    } catch (e) {
-      this.error.set(extractErrorMessage(e, this.translate.instant('companies.saveError')));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  async remove(c: CompanyDto): Promise<void> {
-    if (!confirm(this.translate.instant('companies.deleteConfirm', { name: c.name }))) return;
-    this.error.set(null);
-    try {
-      await this.api.remove(c.id);
-      await this.load();
-    } catch (e) {
-      this.error.set(extractErrorMessage(e, this.translate.instant('companies.deleteError')));
-    }
+  /** Turns a failed request into a user-facing message using the given i18n key as fallback. */
+  errorMessage(error: unknown, key: string): string {
+    return extractErrorMessage(error, this.translate.instant(key));
   }
 }

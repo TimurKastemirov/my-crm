@@ -1,13 +1,6 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
-import {
-  CdkDragDrop,
-  moveItemInArray,
-  transferArrayItem,
-} from '@angular/cdk/drag-drop';
+import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DealStatus, type DealDto, type PipelineDto, type PipelineStageDto } from '@crm/shared';
-import { LocaleService } from '../../core/locale.service';
 import { extractErrorMessage } from '../../core/http-error';
 import { DealsApi } from './deals.api';
 import { PipelinesApi } from './pipelines.api';
@@ -17,119 +10,44 @@ export interface BoardColumn {
   deals: DealDto[];
 }
 
+/** Deals board business logic. Provided at the DealsBoardComponent level (not a singleton). */
 @Injectable()
 export class DealsBoardComponentService {
   private readonly api = inject(DealsApi);
   private readonly pipelinesApi = inject(PipelinesApi);
-  private readonly fb = inject(FormBuilder);
   private readonly translate = inject(TranslateService);
 
-  readonly locale = inject(LocaleService).locale;
-
-  readonly pipeline = signal<PipelineDto | null>(null);
-  readonly columns = signal<BoardColumn[]>([]);
-  readonly loading = signal(false);
-  readonly error = signal<string | null>(null);
-
-  readonly modalOpen = signal(false);
-  readonly saving = signal(false);
-
-  readonly form = this.fb.nonNullable.group({
-    title: ['', [Validators.required, Validators.maxLength(200)]],
-    amount: ['', [Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
-    currency: [''],
-    stageId: ['', [Validators.required]],
-  });
-
-  constructor() {
-    void this.load();
+  /** Loads the default pipeline and groups its deals into stage columns. */
+  async loadBoard(): Promise<{ pipeline: PipelineDto | null; columns: BoardColumn[] }> {
+    const pipelines = await this.pipelinesApi.list();
+    const pipeline = pipelines.find((p) => p.isDefault) ?? pipelines[0] ?? null;
+    if (!pipeline) return { pipeline: null, columns: [] };
+    const stages = [...pipeline.stages].sort((a, b) => a.position - b.position);
+    const deals = await this.api.list({ pipelineId: pipeline.id, limit: 100 });
+    const columns = stages.map((stage) => ({
+      stage,
+      deals: deals.data.filter((d) => d.stageId === stage.id),
+    }));
+    return { pipeline, columns };
   }
 
-  async load(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
-    try {
-      const pipelines = await this.pipelinesApi.list();
-      const pipeline = pipelines.find((p) => p.isDefault) ?? pipelines[0] ?? null;
-      this.pipeline.set(pipeline);
-      if (!pipeline) {
-        this.columns.set([]);
-        return;
-      }
-      const stages = [...pipeline.stages].sort((a, b) => a.position - b.position);
-      const deals = await this.api.list({ pipelineId: pipeline.id, limit: 100 });
-      this.columns.set(
-        stages.map((stage) => ({
-          stage,
-          deals: deals.data.filter((d) => d.stageId === stage.id),
-        })),
-      );
-    } catch (e) {
-      this.error.set(extractErrorMessage(e, this.translate.instant('deals.loadError')));
-    } finally {
-      this.loading.set(false);
-    }
+  moveStage(dealId: string, stageId: string): Promise<DealDto> {
+    return this.api.moveStage(dealId, stageId);
   }
 
-  async drop(event: CdkDragDrop<BoardColumn>): Promise<void> {
-    const target = event.container.data;
-    if (event.previousContainer === event.container) {
-      moveItemInArray(target.deals, event.previousIndex, event.currentIndex);
-      return;
-    }
-    const source = event.previousContainer.data;
-    const deal = source.deals[event.previousIndex];
-    transferArrayItem(source.deals, target.deals, event.previousIndex, event.currentIndex);
-    try {
-      await this.api.moveStage(deal.id, target.stage.id);
-      await this.load(); // refresh the recomputed status (won/lost/open)
-    } catch (e) {
-      this.error.set(extractErrorMessage(e, this.translate.instant('deals.moveError')));
-      await this.load(); // roll back to the server state
-    }
+  /** Creates a deal in the given pipeline/stage from the form value. */
+  create(pipelineId: string, stageId: string, value: { title: string; amount: string; currency: string }): Promise<DealDto> {
+    return this.api.create({
+      pipelineId,
+      stageId,
+      title: value.title,
+      amount: value.amount || undefined,
+      currency: value.currency || undefined,
+    });
   }
 
-  openCreate(): void {
-    const firstStage = this.columns()[0]?.stage.id ?? '';
-    this.form.reset({ title: '', amount: '', currency: '', stageId: firstStage });
-    this.modalOpen.set(true);
-  }
-
-  async save(): Promise<void> {
-    const pipeline = this.pipeline();
-    if (!pipeline || this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this.saving.set(true);
-    this.error.set(null);
-    try {
-      const v = this.form.getRawValue();
-      await this.api.create({
-        pipelineId: pipeline.id,
-        stageId: v.stageId,
-        title: v.title,
-        amount: v.amount || undefined,
-        currency: v.currency || undefined,
-      });
-      this.modalOpen.set(false);
-      await this.load();
-    } catch (e) {
-      this.error.set(extractErrorMessage(e, this.translate.instant('deals.createError')));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  async remove(deal: DealDto): Promise<void> {
-    if (!window.confirm(this.translate.instant('deals.deleteConfirm', { title: deal.title }))) return;
-    this.error.set(null);
-    try {
-      await this.api.remove(deal.id);
-      await this.load();
-    } catch (e) {
-      this.error.set(extractErrorMessage(e, this.translate.instant('deals.deleteError')));
-    }
+  remove(id: string): Promise<void> {
+    return this.api.remove(id);
   }
 
   isWon(deal: DealDto): boolean {
@@ -138,5 +56,10 @@ export class DealsBoardComponentService {
 
   isLost(deal: DealDto): boolean {
     return deal.status === DealStatus.Lost;
+  }
+
+  /** Turns a failed request into a user-facing message using the given i18n key as fallback. */
+  errorMessage(error: unknown, key: string): string {
+    return extractErrorMessage(error, this.translate.instant(key));
   }
 }

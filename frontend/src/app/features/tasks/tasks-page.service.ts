@@ -1,152 +1,43 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TaskPriority, TaskStatus, type TaskDto } from '@crm/shared';
+import { TaskPriority, TaskStatus, type Paginated, type TaskDto } from '@crm/shared';
 import { extractErrorMessage } from '../../core/http-error';
-import { TasksApi } from './tasks.api';
+import { TasksApi, type TaskListParams } from './tasks.api';
 
+/** Tasks business logic. Provided at the TasksPageComponent level (not a singleton). */
 @Injectable()
 export class TasksPageComponentService {
   private readonly api = inject(TasksApi);
-  private readonly fb = inject(FormBuilder);
   private readonly translate = inject(TranslateService);
 
-  readonly items = signal<TaskDto[]>([]);
-  readonly total = signal(0);
-  readonly hasNext = signal(false);
-  readonly page = signal(1);
-  readonly search = signal('');
-  readonly statusFilter = signal<TaskStatus | ''>('');
-  readonly priorityFilter = signal<TaskPriority | ''>('');
-  readonly loading = signal(false);
-  readonly error = signal<string | null>(null);
-
-  readonly modalOpen = signal(false);
-  readonly editingId = signal<string | null>(null);
-  readonly saving = signal(false);
-
-  readonly form = this.fb.nonNullable.group({
-    title: ['', [Validators.required, Validators.maxLength(200)]],
-    description: [''],
-    priority: ['normal'],
-    dueAt: [''],
-  });
-
-  constructor() {
-    void this.load();
+  list(params: TaskListParams): Promise<Paginated<TaskDto>> {
+    return this.api.list(params);
   }
 
-  async load(): Promise<void> {
-    this.loading.set(true);
-    this.error.set(null);
-    try {
-      const res = await this.api.list({
-        page: this.page(),
-        limit: 20,
-        search: this.search() || undefined,
-        status: this.statusFilter() || undefined,
-        priority: this.priorityFilter() || undefined,
-      });
-      this.items.set(res.data);
-      this.total.set(res.meta.total);
-      this.hasNext.set(res.meta.hasNext);
-    } catch (e) {
-      this.error.set(extractErrorMessage(e, this.translate.instant('tasks.loadError')));
-    } finally {
-      this.loading.set(false);
-    }
+  /** Creates (no id) or updates a task from the form value. */
+  save(
+    id: string | null,
+    value: { title: string; description: string; priority: string; dueAt: string },
+  ): Promise<TaskDto> {
+    const body = {
+      title: value.title,
+      description: value.description || undefined,
+      priority: value.priority as TaskPriority,
+      dueAt: value.dueAt ? new Date(value.dueAt).toISOString() : undefined,
+    };
+    return id ? this.api.update(id, body) : this.api.create(body);
   }
 
-  applySearch(value: string): void {
-    this.search.set(value.trim());
-    this.page.set(1);
-    void this.load();
+  setStatus(id: string, status: TaskStatus): Promise<TaskDto> {
+    return this.api.update(id, { status });
   }
 
-  filterByStatus(status: string): void {
-    this.statusFilter.set((status as TaskStatus) || '');
-    this.page.set(1);
-    void this.load();
+  remove(id: string): Promise<void> {
+    return this.api.remove(id);
   }
 
-  filterByPriority(priority: string): void {
-    this.priorityFilter.set((priority as TaskPriority) || '');
-    this.page.set(1);
-    void this.load();
-  }
-
-  goPage(page: number): void {
-    this.page.set(page);
-    void this.load();
-  }
-
-  openCreate(): void {
-    this.editingId.set(null);
-    this.form.reset({ title: '', description: '', priority: 'normal', dueAt: '' });
-    this.modalOpen.set(true);
-  }
-
-  openEdit(task: TaskDto): void {
-    this.editingId.set(task.id);
-    this.form.setValue({
-      title: task.title,
-      description: task.description ?? '',
-      priority: task.priority,
-      dueAt: task.dueAt ? new Date(task.dueAt).toISOString().slice(0, 16) : '',
-    });
-    this.modalOpen.set(true);
-  }
-
-  async save(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this.saving.set(true);
-    this.error.set(null);
-    try {
-      const v = this.form.getRawValue();
-      const body = {
-        title: v.title,
-        description: v.description || undefined,
-        priority: v.priority as TaskPriority,
-        dueAt: v.dueAt ? new Date(v.dueAt).toISOString() : undefined,
-      };
-      const id = this.editingId();
-      if (id) {
-        await this.api.update(id, body);
-      } else {
-        await this.api.create(body);
-      }
-      this.modalOpen.set(false);
-      await this.load();
-    } catch (e) {
-      this.error.set(extractErrorMessage(e, this.translate.instant('tasks.saveError')));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  async setStatus(task: TaskDto, status: string): Promise<void> {
-    const next = status as TaskStatus;
-    if (next === task.status) return;
-    this.error.set(null);
-    try {
-      await this.api.update(task.id, { status: next });
-      await this.load();
-    } catch (e) {
-      this.error.set(extractErrorMessage(e, this.translate.instant('tasks.saveError')));
-    }
-  }
-
-  async remove(task: TaskDto): Promise<void> {
-    if (!window.confirm(this.translate.instant('tasks.deleteConfirm', { title: task.title }))) return;
-    this.error.set(null);
-    try {
-      await this.api.remove(task.id);
-      await this.load();
-    } catch (e) {
-      this.error.set(extractErrorMessage(e, this.translate.instant('tasks.deleteError')));
-    }
+  /** Turns a failed request into a user-facing message using the given i18n key as fallback. */
+  errorMessage(error: unknown, key: string): string {
+    return extractErrorMessage(error, this.translate.instant(key));
   }
 }
