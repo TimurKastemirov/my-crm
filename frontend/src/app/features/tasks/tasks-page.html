@@ -1,29 +1,52 @@
 <div class="flex h-full flex-col">
-  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  <div class="flex items-center justify-between gap-3">
     <h1 class="text-xl font-semibold text-slate-900">{{ 'tasks.title' | translate }}</h1>
-    <button type="button" (click)="openCreate()" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-500">
-      {{ 'tasks.add' | translate }}
-    </button>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        (click)="openSort()"
+        [attr.aria-label]="'a11y.openSort' | translate"
+        class="rounded-lg p-2.5 text-slate-600 ring-1 ring-slate-300 hover:bg-slate-100"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 5h18M6 10h12M10 15h4" stroke-linecap="round" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        (click)="openFilters()"
+        [attr.aria-label]="'a11y.openFilters' | translate"
+        class="rounded-lg p-2.5 text-slate-600 ring-1 ring-slate-300 hover:bg-slate-100 sm:hidden"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+        </svg>
+      </button>
+      <button type="button" (click)="openCreate()" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-500">
+        {{ 'tasks.add' | translate }}
+      </button>
+    </div>
   </div>
 
-  <div class="mt-4 flex shrink-0 flex-col gap-2 sm:flex-row">
+  <div class="mt-4 hidden shrink-0 flex-col gap-2 sm:flex sm:flex-row">
     <input
       #box
       id="tasks-search"
       name="search"
+      [value]="search()"
       [attr.aria-label]="'tasks.searchAria' | translate"
       (keyup.enter)="applySearch(box.value)"
       [attr.placeholder]="'tasks.searchPlaceholder' | translate"
       class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
     />
-    <select id="tasks-status-filter" name="statusFilter" [attr.aria-label]="'tasks.statusFilterAria' | translate" (change)="filterByStatus($any($event.target).value)" class="rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none sm:w-44">
+    <select id="tasks-status-filter" name="statusFilter" [value]="statusFilter()" [attr.aria-label]="'tasks.statusFilterAria' | translate" (change)="filterByStatus($any($event.target).value)" class="rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none sm:w-44">
       <option value="">{{ 'common.allStatuses' | translate }}</option>
       <option value="open">{{ 'taskStatus.open' | translate }}</option>
       <option value="in_progress">{{ 'taskStatus.in_progress' | translate }}</option>
       <option value="done">{{ 'taskStatus.done' | translate }}</option>
       <option value="canceled">{{ 'taskStatus.canceled' | translate }}</option>
     </select>
-    <select id="tasks-priority-filter" name="priorityFilter" [attr.aria-label]="'tasks.priorityFilterAria' | translate" (change)="filterByPriority($any($event.target).value)" class="rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none sm:w-48">
+    <select id="tasks-priority-filter" name="priorityFilter" [value]="priorityFilter()" [attr.aria-label]="'tasks.priorityFilterAria' | translate" (change)="filterByPriority($any($event.target).value)" class="rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none sm:w-48">
       <option value="">{{ 'tasks.anyPriority' | translate }}</option>
       <option value="low">{{ 'taskPriority.low' | translate }}</option>
       <option value="normal">{{ 'taskPriority.normal' | translate }}</option>
@@ -117,4 +140,92 @@
       <button type="button" (click)="modalOpen.set(false)" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-600">{{ 'common.cancel' | translate }}</button>
     </div>
   </form>
+</app-modal>
+
+<app-modal [open]="filtersOpen()" [title]="'common.filters' | translate" (close)="filtersOpen.set(false)">
+  <label for="tasks-search-sheet" class="block text-sm font-medium text-slate-700">
+    {{ 'tasks.searchAria' | translate }}
+    <input
+      id="tasks-search-sheet"
+      name="searchSheet"
+      [value]="draftSearch()"
+      (input)="draftSearch.set($any($event.target).value)"
+      (keyup.enter)="applyFilters()"
+      [attr.placeholder]="'tasks.searchPlaceholder' | translate"
+      class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+    />
+  </label>
+  <label for="tasks-status-filter-sheet" class="mt-3 block text-sm font-medium text-slate-700">
+    {{ 'tasks.statusFilterAria' | translate }}
+    <select
+      id="tasks-status-filter-sheet"
+      name="statusFilterSheet"
+      [value]="draftStatus()"
+      (change)="draftStatus.set($any($event.target).value)"
+      class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500"
+    >
+      <option value="">{{ 'common.allStatuses' | translate }}</option>
+      <option value="open">{{ 'taskStatus.open' | translate }}</option>
+      <option value="in_progress">{{ 'taskStatus.in_progress' | translate }}</option>
+      <option value="done">{{ 'taskStatus.done' | translate }}</option>
+      <option value="canceled">{{ 'taskStatus.canceled' | translate }}</option>
+    </select>
+  </label>
+  <label for="tasks-priority-filter-sheet" class="mt-3 block text-sm font-medium text-slate-700">
+    {{ 'tasks.priorityFilterAria' | translate }}
+    <select
+      id="tasks-priority-filter-sheet"
+      name="priorityFilterSheet"
+      [value]="draftPriority()"
+      (change)="draftPriority.set($any($event.target).value)"
+      class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500"
+    >
+      <option value="">{{ 'tasks.anyPriority' | translate }}</option>
+      <option value="low">{{ 'taskPriority.low' | translate }}</option>
+      <option value="normal">{{ 'taskPriority.normal' | translate }}</option>
+      <option value="high">{{ 'taskPriority.high' | translate }}</option>
+    </select>
+  </label>
+
+  <div class="mt-5 flex gap-2">
+    <button type="button" (click)="applyFilters()" class="flex-1 rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white hover:bg-indigo-500">{{ 'common.apply' | translate }}</button>
+    <button type="button" (click)="resetFilters()" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-600">{{ 'common.reset' | translate }}</button>
+  </div>
+</app-modal>
+
+<app-modal [open]="sortOpen()" [title]="'common.sort' | translate" (close)="sortOpen.set(false)">
+  <div class="flex flex-col divide-y divide-slate-100">
+    @for (field of sortFields; track field.key) {
+      <div class="flex items-center justify-between gap-3 py-2">
+        <span class="text-sm text-slate-700">{{ field.label | translate }}</span>
+        <div class="inline-flex overflow-hidden rounded-lg ring-1 ring-slate-300">
+          <button
+            type="button"
+            (click)="setDraftSort(field.key, 'asc')"
+            [attr.aria-label]="(field.label | translate) + ' — ' + ('common.ascending' | translate)"
+            [attr.aria-pressed]="draftSortBy() === field.key && draftSortOrder() === 'asc'"
+            class="px-3 py-1.5 text-xs font-medium"
+            [class.bg-indigo-600]="draftSortBy() === field.key && draftSortOrder() === 'asc'"
+            [class.text-white]="draftSortBy() === field.key && draftSortOrder() === 'asc'"
+            [class.text-slate-600]="!(draftSortBy() === field.key && draftSortOrder() === 'asc')"
+          >ASC</button>
+          <button
+            type="button"
+            (click)="setDraftSort(field.key, 'desc')"
+            [attr.aria-label]="(field.label | translate) + ' — ' + ('common.descending' | translate)"
+            [attr.aria-pressed]="draftSortBy() === field.key && draftSortOrder() === 'desc'"
+            class="border-l border-slate-300 px-3 py-1.5 text-xs font-medium"
+            [class.bg-indigo-600]="draftSortBy() === field.key && draftSortOrder() === 'desc'"
+            [class.text-white]="draftSortBy() === field.key && draftSortOrder() === 'desc'"
+            [class.text-slate-600]="!(draftSortBy() === field.key && draftSortOrder() === 'desc')"
+          >DESC</button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="mt-5 flex gap-2">
+    <button type="button" (click)="applySort()" class="flex-1 rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white hover:bg-indigo-500">{{ 'common.apply' | translate }}</button>
+    <button type="button" (click)="resetSort()" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-600">{{ 'common.reset' | translate }}</button>
+  </div>
 </app-modal>

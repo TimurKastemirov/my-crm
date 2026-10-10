@@ -12,7 +12,16 @@
     "next": "Далее",
     "total": "Итого:",
     "signOut": "Выйти",
-    "allStatuses": "Все статусы"
+    "allStatuses": "Все статусы",
+    "filters": "Фильтры",
+    "apply": "Применить",
+    "reset": "Сбросить",
+    "sort": "Сортировка",
+    "createdAt": "Создан",
+    "updatedAt": "Обновлён",
+    "status": "Статус",
+    "ascending": "По возрастанию",
+    "descending": "По убыванию"
   },
   "lang": {
     "label": "Язык",
@@ -30,7 +39,9 @@
   },
   "a11y": {
     "openMenu": "Открыть меню",
-    "close": "Закрыть"
+    "close": "Закрыть",
+    "openFilters": "Открыть фильтры",
+    "openSort": "Открыть сортировку"
   },
   "auth": {
     "signInTitle": "Вход в CRM",

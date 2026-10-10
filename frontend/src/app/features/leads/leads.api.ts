@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import type { DealDto, LeadDto, LeadStatus, Paginated } from '@crm/shared';
+import type { DealDto, LeadDto, LeadStatus, Paginated, SortOrder } from '@crm/shared';
 import { ApiClient } from '../../core/api-client';
 
 export interface LeadInput {
@@ -14,6 +14,8 @@ export interface LeadListParams {
   limit?: number;
   search?: string;
   status?: LeadStatus;
+  sortBy?: string;
+  sortOrder?: SortOrder;
 }
 
 @Injectable({ providedIn: 'root' })

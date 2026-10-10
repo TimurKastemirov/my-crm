@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import type { Paginated, TaskDto, TaskPriority, TaskStatus } from '@crm/shared';
+import type { Paginated, SortOrder, TaskDto, TaskPriority, TaskStatus } from '@crm/shared';
 import { ApiClient } from '../../core/api-client';
 
 export interface TaskInput {
@@ -17,6 +17,8 @@ export interface TaskListParams {
   search?: string;
   status?: TaskStatus;
   priority?: TaskPriority;
+  sortBy?: string;
+  sortOrder?: SortOrder;
 }
 
 @Injectable({ providedIn: 'root' })

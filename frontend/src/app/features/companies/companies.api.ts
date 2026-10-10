@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import type { CompanyDto, Paginated } from '@crm/shared';
+import type { CompanyDto, Paginated, SortOrder } from '@crm/shared';
 import { ApiClient } from '../../core/api-client';
 
 export interface CompanyInput {
@@ -14,6 +14,8 @@ export interface ListParams {
   page?: number;
   limit?: number;
   search?: string;
+  sortBy?: string;
+  sortOrder?: SortOrder;
 }
 
 @Injectable({ providedIn: 'root' })

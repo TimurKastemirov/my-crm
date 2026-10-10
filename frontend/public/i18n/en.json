@@ -12,7 +12,16 @@
     "next": "Next",
     "total": "Total:",
     "signOut": "Sign out",
-    "allStatuses": "All statuses"
+    "allStatuses": "All statuses",
+    "filters": "Filters",
+    "apply": "Apply",
+    "reset": "Reset",
+    "sort": "Sort",
+    "createdAt": "Created",
+    "updatedAt": "Updated",
+    "status": "Status",
+    "ascending": "Ascending",
+    "descending": "Descending"
   },
   "lang": {
     "label": "Language",
@@ -30,7 +39,9 @@
   },
   "a11y": {
     "openMenu": "Open menu",
-    "close": "Close"
+    "close": "Close",
+    "openFilters": "Open filters",
+    "openSort": "Open sorting"
   },
   "auth": {
     "signInTitle": "Sign in to CRM",
