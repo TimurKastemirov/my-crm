@@ -150,7 +150,26 @@
     "loadError": "Failed to load the board",
     "createError": "Failed to create deal",
     "moveError": "Failed to move the deal",
-    "deleteError": "Failed to delete"
+    "deleteError": "Failed to delete",
+    "stageFilterAria": "Filter by stage",
+    "stageAria": "Deal stage",
+    "statusFilterAria": "Filter by status",
+    "searchAria": "Search deals",
+    "searchPlaceholder": "Search by title…",
+    "emptyStage": "No deals in this stage"
+  },
+  "dealStage": {
+    "new": "New",
+    "qualification": "Qualification",
+    "proposal": "Proposal",
+    "negotiation": "Negotiation",
+    "won": "Won",
+    "lost": "Lost"
+  },
+  "dealStatus": {
+    "open": "Open",
+    "won": "Won",
+    "lost": "Lost"
   },
   "tasks": {
     "title": "Tasks",

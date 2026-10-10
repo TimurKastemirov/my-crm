@@ -150,7 +150,26 @@
     "loadError": "Не вдалося завантажити дошку",
     "createError": "Не вдалося створити угоду",
     "moveError": "Не вдалося перемістити угоду",
-    "deleteError": "Не вдалося видалити"
+    "deleteError": "Не вдалося видалити",
+    "stageFilterAria": "Фільтр за етапом",
+    "stageAria": "Етап угоди",
+    "statusFilterAria": "Фільтр за статусом",
+    "searchAria": "Пошук угод",
+    "searchPlaceholder": "Пошук за назвою…",
+    "emptyStage": "Немає угод на цьому етапі"
+  },
+  "dealStage": {
+    "new": "Новий",
+    "qualification": "Кваліфікація",
+    "proposal": "Пропозиція",
+    "negotiation": "Переговори",
+    "won": "Виграна",
+    "lost": "Програна"
+  },
+  "dealStatus": {
+    "open": "Відкрита",
+    "won": "Виграна",
+    "lost": "Програна"
   },
   "tasks": {
     "title": "Завдання",

@@ -10,6 +10,16 @@ export interface BoardColumn {
   deals: DealDto[];
 }
 
+/** Default (seeded) stage names → i18n keys under `dealStage.*`. Custom stages fall back to their raw name. */
+const DEFAULT_STAGE_KEYS: Record<string, string> = {
+  New: 'dealStage.new',
+  Qualification: 'dealStage.qualification',
+  Proposal: 'dealStage.proposal',
+  Negotiation: 'dealStage.negotiation',
+  Won: 'dealStage.won',
+  Lost: 'dealStage.lost',
+};
+
 /** Deals board business logic. Provided at the DealsBoardComponent level (not a singleton). */
 @Injectable()
 export class DealsBoardComponentService {
@@ -35,6 +45,24 @@ export class DealsBoardComponentService {
     return this.api.moveStage(dealId, stageId);
   }
 
+  /**
+   * Deals of a single stage column, narrowed by status and a case-insensitive title
+   * search. Used by the mobile card list (the kanban renders all columns directly).
+   */
+  filterDeals(
+    columns: BoardColumn[],
+    filter: { stageId: string; status: DealStatus | ''; search: string },
+  ): DealDto[] {
+    const column = columns.find((c) => c.stage.id === filter.stageId);
+    if (!column) return [];
+    const term = filter.search.trim().toLowerCase();
+    return column.deals.filter(
+      (d) =>
+        (!filter.status || d.status === filter.status) &&
+        (!term || d.title.toLowerCase().includes(term)),
+    );
+  }
+
   /** Creates a deal in the given pipeline/stage from the form value. */
   create(pipelineId: string, stageId: string, value: { title: string; amount: string; currency: string }): Promise<DealDto> {
     return this.api.create({
@@ -48,6 +76,15 @@ export class DealsBoardComponentService {
 
   remove(id: string): Promise<void> {
     return this.api.remove(id);
+  }
+
+  /**
+   * i18n key for a stage label. Seeded default stages resolve to a `dealStage.*`
+   * translation; a custom stage returns its raw name, which the `translate` pipe
+   * passes through unchanged when no matching key exists.
+   */
+  stageLabelKey(stage: PipelineStageDto): string {
+    return DEFAULT_STAGE_KEYS[stage.name] ?? stage.name;
   }
 
   isWon(deal: DealDto): boolean {

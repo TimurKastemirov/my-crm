@@ -150,7 +150,26 @@
     "loadError": "Не удалось загрузить доску",
     "createError": "Не удалось создать сделку",
     "moveError": "Не удалось переместить сделку",
-    "deleteError": "Не удалось удалить"
+    "deleteError": "Не удалось удалить",
+    "stageFilterAria": "Фильтр по этапу",
+    "stageAria": "Этап сделки",
+    "statusFilterAria": "Фильтр по статусу",
+    "searchAria": "Поиск сделок",
+    "searchPlaceholder": "Поиск по названию…",
+    "emptyStage": "Нет сделок на этом этапе"
+  },
+  "dealStage": {
+    "new": "Новый",
+    "qualification": "Квалификация",
+    "proposal": "Предложение",
+    "negotiation": "Переговоры",
+    "won": "Выиграна",
+    "lost": "Проиграна"
+  },
+  "dealStatus": {
+    "open": "Открыта",
+    "won": "Выиграна",
+    "lost": "Проиграна"
   },
   "tasks": {
     "title": "Задачи",
