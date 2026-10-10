@@ -19,7 +19,7 @@ Everything in the codebase and the product is written in **English**:
 Do not introduce Russian into code or product text. Two things are deliberately not affected:
 
 - Real **user-entered data** (e.g. sample/demo records) stays exactly as entered.
-- **Commit messages** follow the repository's existing convention (currently Russian — check `git log`).
+- **Commit messages** are written in **English** (Conventional Commits; see `.claude/skills/commit`). Commits before 2026-10-11 are in Russian — that is history, not the convention.
 
 ## Skills
 

@@ -20,7 +20,8 @@ but almost never the "why" — and the "why" is the main value of the message.
 ### 1. Understand the changes (don't commit blind)
 - `git status` — what is affected.
 - `git diff` and `git diff --staged` — the actual substantive changes.
-- `git log --oneline -10` — adopt the style and **language** of the repo's existing messages.
+- `git log --oneline -10` — adopt the **style** of the repo's existing messages (but
+  write the message in **English** — see §4; older history is Russian, ignore that).
 
 Determine which parts of the monorepo are touched (`backend`, `frontend`, `shared`,
 `docker`, `ci`, repo root) — that becomes the `scope`.
@@ -48,9 +49,9 @@ The message must answer two questions:
     or, more narrowly, a domain module (`auth`, `deals`, `health`…).
 - A blank line.
 - **Body:** 1–5 bullets of "what changed", then a short "Why: …" phrase/bullet. Lines ~72–100 chars.
-- **Language** — match the repository (commit messages here are currently in Russian;
-  check `git log`). This skill's own text is in English, but the commit messages you
-  write follow the repo's existing language.
+- **Language — English.** Write every commit message (subject and body) in English.
+  Commits before 2026-10-11 are in Russian; that is history only — all new commits are
+  in English, regardless of what `git log` shows.
 - **Do NOT add attribution/co-authorship lines** (`Co-Authored-By`, "Generated with…"):
   by the repo owner's requirement, commits go without them.
 
@@ -78,37 +79,35 @@ Why: one or two sentences about the reason/problem and the expected effect.
 
 **Example 1 — a backend feature.** Added a JWT module, argon2, refresh-token rotation:
 ```
-feat(auth): добавить JWT-аутентификацию с ротацией refresh-токенов
+feat(auth): add JWT authentication with refresh-token rotation
 
-- эндпоинты register/login/refresh/logout/logout-all
-- argon2id для паролей, хранение только хеша refresh-токена
-- guard проверки access-токена
+- register/login/refresh/logout/logout-all endpoints
+- argon2id for passwords, store only the refresh-token hash
+- guard that validates the access token
 
-Зачем: закрыть базовую аутентификацию перед RBAC — без контекста
-пользователя остальные защищённые модули не имеют смысла.
+Why: close out basic authentication before RBAC — the other protected
+modules are meaningless without a user context.
 ```
 
 **Example 2 — infrastructure:**
 ```
-build(docker): добавить multi-stage сборку и docker-compose
+build(docker): add multi-stage build and docker-compose
 
-- Dockerfile для backend и frontend (таргеты dev/runtime)
-- docker-compose: postgres, redis, healthcheck-и, depends_on
-- nginx: reverse-proxy /api и SPA-fallback
+- Dockerfile for backend and frontend (dev/runtime targets)
+- docker-compose: postgres, redis, healthchecks, depends_on
+- nginx: reverse-proxy /api and SPA fallback
 
-Зачем: единый `docker compose up` для локального запуска и
-воспроизводимая прод-сборка образов.
+Why: a single `docker compose up` for local runs and a reproducible
+production image build.
 ```
 
-(The example bodies stay in Russian on purpose — they show the repo's current commit language.)
-
 **Example 3 — subject: bad vs good:**
-- ❌ `изменения`, `fix bug`, `update files` — say neither what nor why.
-- ✅ `fix(deals): не терять stage при перетаскивании между воронками`.
+- ❌ `changes`, `fix bug`, `update files` — say neither what nor why.
+- ✅ `fix(deals): keep stage when dragging a card between pipelines`.
 
 ## Anti-patterns
 - A line-by-line retelling of the diff instead of the meaning of the change.
-- "WIP", "фиксы", "мелочи", "правки" — content-free.
+- "WIP", "fixes", "misc", "tweaks" — content-free.
 - One huge commit for unrelated changes.
 - Committing secrets or generated artifacts.
 - An invented "why" not supported by the context.

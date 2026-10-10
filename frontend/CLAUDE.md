@@ -6,7 +6,7 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Comments: `//`, `/* */`, JSDoc and HTML `<!-- -->` — English.
 - UI: visible text, button labels, `placeholder`, `aria-label`, `<option>` text, empty/loading/error states — English.
 - API (backend): exception/validation messages returned to clients and Swagger docs — English; seeded default display names (system roles, default pipeline & stages) — English.
-- Not affected: real user-entered data (sample/demo records) stays as typed; commit messages follow the repo's existing convention (see `git log`). Repo-wide conventions live in the root `AGENTS.md`.
+- Not affected: real user-entered data (sample/demo records) stays as typed. Commit messages are written in English (see the root `AGENTS.md`). Repo-wide conventions live in the root `AGENTS.md`.
 
 ## TypeScript Best Practices
 
