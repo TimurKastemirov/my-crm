@@ -32,6 +32,7 @@ import {
   isInvitationPending,
 } from '../organizations/invitation-token.js';
 import { RoleEntity } from '../rbac/entities/role.entity.js';
+import { SessionVersionService } from '../security/session-version.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { roleAssignmentDenial } from '../organizations/member-policy.js';
 import { isForeignKeyViolation, isUniqueViolation } from '../../common/db-errors.js';
@@ -60,6 +61,7 @@ export class AuthService {
     private readonly dataSource: DataSource,
     private readonly usersService: UsersService,
     private readonly jwt: JwtService,
+    private readonly sessions: SessionVersionService,
     private readonly config: ConfigService,
     private readonly rolesService: RolesService,
     private readonly pipelinesService: PipelinesService,
@@ -209,9 +211,15 @@ export class AuthService {
       throw new UnauthorizedException('Organization membership is not active');
     }
 
-    // Rotation: revoke the current token and issue a new one in the same family.
-    record.revokedAt = new Date();
-    await this.refreshRepo.save(record);
+    // Rotation: revoke the current token and issue a new one in the same family. Conditional, so
+    // two simultaneous refreshes with one token can't both succeed and fork the family.
+    const rotated = await this.refreshRepo.update(
+      { id: record.id, revokedAt: IsNull() },
+      { revokedAt: new Date() },
+    );
+    if (!rotated.affected) {
+      throw new UnauthorizedException('Refresh token already used');
+    }
     return this.issueTokens(user, record.organizationId, record.familyId, meta);
   }
 
@@ -250,8 +258,10 @@ export class AuthService {
 
     const passwordHash = await argonHash(dto.newPassword);
     // One transaction: new password, a new session for this device, every other session revoked.
-    return this.dataSource.transaction(async (manager) => {
+    const tokens = await this.dataSource.transaction(async (manager) => {
       await manager.getRepository(UserEntity).update({ id: user.id }, { passwordHash });
+      // Every access token issued before stops working; this session gets the new version.
+      user.sessionVersion = await this.sessions.bump(manager, user.id);
       const familyId = randomUUID();
       const tokens = await this.issueTokens(
         user,
@@ -276,14 +286,20 @@ export class AuthService {
       );
       return tokens;
     });
+    await this.sessions.publish(user.id, user.sessionVersion);
+    return tokens;
   }
 
   /** Logout from all devices: revoke all of the user's active tokens. */
   async logoutAll(userId: string, organizationId?: string): Promise<void> {
-    await this.refreshRepo.update(
-      { userId, revokedAt: IsNull() },
-      { revokedAt: new Date() },
-    );
+    // Refresh tokens are revoked and the session version bumped, so access tokens die too.
+    const version = await this.dataSource.transaction(async (manager) => {
+      await manager
+        .getRepository(RefreshTokenEntity)
+        .update({ userId, revokedAt: IsNull() }, { revokedAt: new Date() });
+      return this.sessions.bump(manager, userId);
+    });
+    await this.sessions.publish(userId, version);
     if (organizationId) {
       await this.audit.recordBestEffort([
         {
@@ -460,6 +476,7 @@ export class AuthService {
       sub: user.id,
       organizationId,
       email: user.email,
+      sv: user.sessionVersion,
     };
     const accessToken = await this.jwt.signAsync(payload);
 

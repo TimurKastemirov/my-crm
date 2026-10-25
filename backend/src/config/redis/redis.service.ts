@@ -20,6 +20,8 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         return delay;
       },
       maxRetriesPerRequest: 3,
+      // Fail fast when Redis is unreachable: callers fall back to PostgreSQL instead of hanging.
+      commandTimeout: 1000,
     });
 
     this.redisClient.on('connect', () => {
@@ -55,6 +57,38 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       }
     } catch (error) {
       this.logger.error(`Error setting key ${key} in Redis`, error);
+    }
+  }
+
+  /**
+   * Sets an integer value only if the key is absent or holds a smaller number — out-of-order
+   * writers can't move it backwards. Never throws.
+   */
+  async setIfGreater(key: string, value: number, ttlSeconds: number): Promise<void> {
+    try {
+      await this.redisClient.eval(
+        `local cur = redis.call('GET', KEYS[1])
+         if (not cur) or (tonumber(cur) == nil) or (tonumber(cur) < tonumber(ARGV[1])) then
+           redis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[2])
+         end
+         return 1`,
+        1,
+        key,
+        String(value),
+        String(ttlSeconds),
+      );
+    } catch (error) {
+      this.logger.error(`Error setting key ${key} in Redis`, error);
+    }
+  }
+
+  /** SET … NX: writes only if the key is absent (true when written). Never throws. */
+  async setIfAbsent(key: string, value: string, ttlSeconds: number): Promise<boolean> {
+    try {
+      return (await this.redisClient.set(key, value, 'EX', ttlSeconds, 'NX')) === 'OK';
+    } catch (error) {
+      this.logger.error(`Error setting key ${key} in Redis`, error);
+      return false;
     }
   }
 

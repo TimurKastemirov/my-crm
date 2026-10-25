@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 import type { JwtPayload } from '@crm/shared';
+import { SessionVersionService } from '../../security/session-version.service.js';
 
 /**
  * Validates the Bearer access token and puts the payload on request.user.
@@ -18,6 +19,7 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly sessions: SessionVersionService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -31,14 +33,20 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     const token = header.slice('Bearer '.length).trim();
+    let payload: JwtPayload;
     try {
-      const payload = await this.jwt.verifyAsync<JwtPayload>(token, {
+      payload = await this.jwt.verifyAsync<JwtPayload>(token, {
         secret: this.config.get<string>('JWT_ACCESS_SECRET'),
       });
-      request.user = payload;
-      return true;
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }
+    // Revoked by a password change / sign out everywhere (or the account is gone).
+    const current = await this.sessions.current(payload.sub);
+    if (current === null || (payload.sv ?? 0) !== current) {
+      throw new UnauthorizedException('The session has been revoked');
+    }
+    request.user = payload;
+    return true;
   }
 }

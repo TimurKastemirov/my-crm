@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -28,6 +29,8 @@ export class AuthService {
   readonly isAuthenticated = computed(() => this.user() !== null);
 
   private sessionLoad: Promise<boolean> | null = null;
+  /** The refresh in flight, shared by every request that got a 401 meanwhile. */
+  private refreshing: Promise<string | null> | null = null;
 
   async login(payload: LoginRequest): Promise<void> {
     const result = await firstValueFrom(this.api.post<AuthResult>('/auth/login', payload));
@@ -59,6 +62,48 @@ export class AuthService {
   /** Whether the current user has the permission in the active organization. */
   can(permission: Permission): boolean {
     return this.permissions().includes(permission);
+  }
+
+  /**
+   * Renews the session after a 401 on a request sent with `sentAccessToken`. Resolves the access
+   * token to retry with, or null when the session is over (refresh refused). Rejects on a
+   * transient failure (network, 5xx, 429) so the session survives and only that request fails.
+   * Concurrent callers share one refresh; tabs coordinate through a Web Lock — refresh tokens are
+   * single-use and reusing one makes the server revoke the whole session family.
+   */
+  refreshAccessToken(sentAccessToken: string | null): Promise<string | null> {
+    // Another request or tab already renewed the session: retry with the current token.
+    const current = this.tokens.access;
+    if (current && current !== sentAccessToken) return Promise.resolve(current);
+    this.refreshing ??= this.renewTokens().finally(() => {
+      this.refreshing = null;
+    });
+    return this.refreshing;
+  }
+
+  private async renewTokens(): Promise<string | null> {
+    const seenRefresh = this.tokens.refresh;
+    return withRefreshLock(async () => {
+      const refreshToken = this.tokens.refresh;
+      if (!refreshToken) return null;
+      // Another tab renewed while we waited for the lock.
+      if (refreshToken !== seenRefresh) return this.tokens.access;
+      try {
+        const tokens = await firstValueFrom(
+          this.api.post<AuthTokens>('/auth/refresh', { refreshToken }),
+        );
+        // Signed out / in again meanwhile: keep that session, don't resurrect this one.
+        if (this.tokens.refresh !== refreshToken) return this.tokens.access;
+        this.tokens.set(tokens);
+        return tokens.accessToken;
+      } catch (error) {
+        // A newer pair arrived meanwhile (e.g. password change): use it.
+        if (this.tokens.refresh !== refreshToken) return this.tokens.access;
+        const status = (error as HttpErrorResponse | undefined)?.status;
+        if (status === 401 || status === 400) return null;
+        throw error;
+      }
+    });
   }
 
   /** Uses a new token pair for the current session (e.g. after a password change). */
@@ -137,4 +182,10 @@ export class AuthService {
     this.tokens.set(result.tokens);
     this.user.set(result.user);
   }
+}
+
+/** Runs `fn` under a cross-tab lock when the Web Locks API is available. */
+function withRefreshLock<T>(fn: () => Promise<T>): Promise<T> {
+  const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+  return locks ? locks.request('crm-token-refresh', fn) : fn();
 }

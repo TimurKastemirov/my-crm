@@ -39,6 +39,10 @@ export class UserEntity {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
 
+  /** Bumped to invalidate every access token issued before (password change, sign out everywhere). */
+  @Column({ name: 'session_version', type: 'int', default: 0 })
+  sessionVersion!: number;
+
   @Column({ name: 'last_login_at', type: 'timestamptz', nullable: true })
   lastLoginAt!: Date | null;
 

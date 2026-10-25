@@ -221,6 +221,11 @@ export interface JwtPayload {
   sub: UUID;
   organizationId: UUID;
   email: string;
+  /**
+   * The user's session version when the token was issued. Changing the password or signing out
+   * everywhere bumps it, which invalidates every access token issued before. Missing = 0.
+   */
+  sv?: number;
 }
 
 /** Result of register/login/refresh. */
@@ -595,6 +600,8 @@ export const API_ROUTES = {
 export const redisKeys = {
   userPermissions: (orgId: UUID, userId: UUID) =>
     `crm:${orgId}:user:${userId}:perms`,
+  /** Cached `users.session_version` (PostgreSQL stays the source of truth). */
+  sessionVersion: (userId: UUID) => `crm:user:${userId}:session-version`,
   dashboardSummary: (orgId: UUID) => `crm:${orgId}:dashboard:summary`,
   unreadNotifications: (orgId: UUID, userId: UUID) =>
     `crm:${orgId}:user:${userId}:notif:unread`,

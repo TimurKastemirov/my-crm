@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { SessionVersionService } from './session-version.service.js';
 import { parseDurationToMs } from '../auth/auth.util.js';
 
 /**
@@ -23,7 +24,7 @@ import { parseDurationToMs } from '../auth/auth.util.js';
       }),
     }),
   ],
-  providers: [JwtAuthGuard],
-  exports: [JwtAuthGuard, JwtModule],
+  providers: [JwtAuthGuard, SessionVersionService],
+  exports: [JwtAuthGuard, JwtModule, SessionVersionService],
 })
 export class SecurityModule {}
