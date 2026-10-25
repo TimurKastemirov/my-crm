@@ -20,9 +20,16 @@ export class App {
     // HTTP error interceptor, which the translate loader's HttpClient runs through).
     // `untracked` so this only reacts to the user changing — not to `apply()` reading
     // the current lang, which would otherwise re-fire and fight the language switcher.
+    // A language picked before signing in was sent with the sign-in and saved to the profile,
+    // so the user's locale already reflects it — the pick is consumed here.
     effect(() => {
       const user = this.auth.user();
-      if (user) untracked(() => this.locale.apply(user.locale as AppLocale));
+      if (user) {
+        untracked(() => {
+          this.locale.apply(user.locale as AppLocale);
+          this.locale.clearChosenBeforeSignIn();
+        });
+      }
     });
   }
 }

@@ -202,6 +202,8 @@ export interface AuthTokens {
 export interface LoginRequest {
   email: string;
   password: string;
+  /** A UI language picked explicitly before signing in: it wins and is saved to the profile. */
+  locale?: AppLocale;
 }
 
 export interface RegisterRequest {
@@ -210,6 +212,8 @@ export interface RegisterRequest {
   firstName: string;
   lastName: string;
   organizationName: string;
+  /** UI language the account starts with (the one the person registered in); defaults to 'en'. */
+  locale?: AppLocale;
 }
 
 /** Access token payload (JWT). */
@@ -348,6 +352,11 @@ export interface AcceptInvitationRequest {
   password: string;
   firstName?: string;
   lastName?: string;
+  /**
+   * New account: its initial UI language. Existing account: a language picked explicitly
+   * before accepting — it wins and is saved to the profile (like LoginRequest.locale).
+   */
+  locale?: AppLocale;
 }
 
 export interface CompanyDto extends BaseEntity {

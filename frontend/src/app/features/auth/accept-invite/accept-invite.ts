@@ -3,12 +3,13 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+import { LanguageSwitcherComponent } from '../../../shared/ui/language-switcher/language-switcher';
 import type { InvitationPreview } from '@crm/shared';
 import { AcceptInviteComponentService } from './accept-invite.service';
 
 @Component({
   selector: 'app-accept-invite',
-  imports: [ReactiveFormsModule, RouterLink, TranslatePipe],
+  imports: [ReactiveFormsModule, RouterLink, TranslatePipe, LanguageSwitcherComponent],
   templateUrl: './accept-invite.html',
   providers: [AcceptInviteComponentService],
 })

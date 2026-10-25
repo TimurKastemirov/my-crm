@@ -1,13 +1,17 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsIn,
   IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
   MinLength,
 } from 'class-validator';
-import type {
-  AcceptInvitationRequest,
-  InvitationPreviewRequest,
+import {
+  SUPPORTED_LOCALES,
+  type AcceptInvitationRequest,
+  type AppLocale,
+  type InvitationPreviewRequest,
 } from '@crm/shared';
 
 export class InvitationTokenDto implements InvitationPreviewRequest {
@@ -37,4 +41,12 @@ export class AcceptInvitationDto
   @IsString()
   @MaxLength(100)
   lastName?: string;
+
+  @ApiPropertyOptional({
+    enum: SUPPORTED_LOCALES,
+    description: 'UI language of a new account (default en)',
+  })
+  @IsOptional()
+  @IsIn([...SUPPORTED_LOCALES])
+  locale?: AppLocale;
 }

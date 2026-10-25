@@ -4,6 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { SUPPORTED_LOCALES, type AppLocale } from '@crm/shared';
 
 const STORAGE_KEY = 'crm.locale';
+/** A language picked explicitly while signed out; sent with the next sign-in so it wins over the profile. */
+const CHOSEN_KEY = 'crm.localeChosen';
 
 /** Maps our short locale to the Angular LOCALE_ID used by the currency/date pipes. */
 const NG_LOCALE: Record<AppLocale, string> = {
@@ -43,6 +45,35 @@ export class LocaleService {
     this.lang.set(lang);
     this.translate.use(lang).subscribe();
     this.persistLocal(lang);
+  }
+
+  /** An explicit pick while signed out: applied now and remembered until the next sign-in. */
+  choose(lang: AppLocale): void {
+    this.apply(lang);
+    try {
+      localStorage.setItem(CHOSEN_KEY, lang);
+    } catch {
+      /* storage may be unavailable (private mode) */
+    }
+  }
+
+  /** The language picked before signing in, if any — to send with login/accept. */
+  chosenBeforeSignIn(): AppLocale | null {
+    try {
+      const v = localStorage.getItem(CHOSEN_KEY);
+      return this.isSupported(v) ? v : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Once a session has applied its language, the pre-sign-in pick has been consumed. */
+  clearChosenBeforeSignIn(): void {
+    try {
+      localStorage.removeItem(CHOSEN_KEY);
+    } catch {
+      /* ignore */
+    }
   }
 
   isSupported(value: unknown): value is AppLocale {

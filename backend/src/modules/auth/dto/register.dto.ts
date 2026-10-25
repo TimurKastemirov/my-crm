@@ -1,5 +1,14 @@
-import { IsEmail, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
-import type { RegisterRequest } from '@crm/shared';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsEmail,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
+import { SUPPORTED_LOCALES, type AppLocale, type RegisterRequest } from '@crm/shared';
 
 export class RegisterDto implements RegisterRequest {
   @IsEmail()
@@ -25,4 +34,9 @@ export class RegisterDto implements RegisterRequest {
   @IsNotEmpty()
   @MaxLength(160)
   organizationName!: string;
+
+  @ApiPropertyOptional({ enum: SUPPORTED_LOCALES, description: 'Initial UI language (default en)' })
+  @IsOptional()
+  @IsIn([...SUPPORTED_LOCALES])
+  locale?: AppLocale;
 }

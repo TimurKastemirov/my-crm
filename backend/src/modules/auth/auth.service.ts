@@ -13,6 +13,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import {
   OrganizationMemberStatus,
   PERMISSIONS,
+  type AppLocale,
   type AuthResult,
   type AuthTokens,
   type InvitationPreview,
@@ -81,6 +82,7 @@ export class AuthService {
             passwordHash,
             firstName: dto.firstName.trim(),
             lastName: dto.lastName.trim(),
+            ...(dto.locale ? { locale: dto.locale } : {}),
           }),
         );
 
@@ -130,6 +132,7 @@ export class AuthService {
       throw new UnauthorizedException('The user has no active organization');
     }
 
+    await this.applyChosenLocale(user, dto.locale);
     await this.usersService.updateLastLogin(user.id);
     const tokens = await this.issueTokens(user, organizationId, randomUUID(), meta);
     return { user: this.toUserDto(user), tokens };
@@ -269,8 +272,15 @@ export class AuthService {
             passwordHash: passwordHash as string,
             firstName: (dto.firstName as string).trim(),
             lastName: (dto.lastName as string).trim(),
+            ...(dto.locale ? { locale: dto.locale } : {}),
           }),
         ));
+
+      // A language picked before accepting wins for an existing account (saved with the membership).
+      if (existing && dto.locale && dto.locale !== existing.locale) {
+        await userRepo.update({ id: existing.id }, { locale: dto.locale });
+        existing.locale = dto.locale;
+      }
 
       const memberRepo = manager.getRepository(OrganizationMemberEntity);
       if (
@@ -346,6 +356,16 @@ export class AuthService {
 
   private hashToken(raw: string): string {
     return createHash('sha256').update(raw).digest('hex');
+  }
+
+  /** A language picked explicitly before signing in wins over the saved one and is stored in the profile. */
+  private async applyChosenLocale(
+    user: UserEntity,
+    locale: AppLocale | undefined,
+  ): Promise<void> {
+    if (!locale || locale === user.locale) return;
+    await this.usersService.updateProfile(user.id, { locale });
+    user.locale = locale;
   }
 
   private async pendingInvitation(rawToken: string): Promise<OrganizationInvitationEntity> {

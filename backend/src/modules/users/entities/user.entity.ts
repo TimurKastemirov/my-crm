@@ -33,7 +33,7 @@ export class UserEntity {
   @Column({ type: 'varchar', length: 64, default: 'UTC' })
   timezone!: string;
 
-  @Column({ type: 'varchar', length: 10, default: 'ru' })
+  @Column({ type: 'varchar', length: 10, default: 'en' })
   locale!: string;
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
