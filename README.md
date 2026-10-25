@@ -65,7 +65,8 @@ npm run build:shared
 # 4. Create the database (name as in backend/.env, crm_db by default)
 createdb crm_db     # or via psql/a GUI
 
-# 5. Migrations (none yet — the command safely does nothing)
+# 5. Apply migrations — run this again after every pull that adds new ones
+#    (a missing table shows up as 500 errors from the API)
 npm run migration:run -w backend
 
 # 6. Start in two terminals:
