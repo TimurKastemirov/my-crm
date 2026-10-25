@@ -7,9 +7,18 @@ import { AuthService } from '../../core/auth.service';
 import { TeamApi } from './team.api';
 import { TeamPageComponentService } from './team-page.service';
 
-const role = (code: string, isSystem = true): RoleRef => ({ id: `role-${code}`, name: code, code, isSystem });
+const role = (code: string, isSystem = true): RoleRef => ({
+  id: `role-${code}`,
+  name: code,
+  code,
+  isSystem,
+});
 
-const member = (userId: string, roleRef: RoleRef | null, status: MemberDto['status'] = 'active'): MemberDto => ({
+const member = (
+  userId: string,
+  roleRef: RoleRef | null,
+  status: MemberDto['status'] = 'active',
+): MemberDto => ({
   id: `member-${userId}`,
   organizationId: 'org-1',
   userId,
