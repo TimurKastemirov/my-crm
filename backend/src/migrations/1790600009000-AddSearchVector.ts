@@ -12,7 +12,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * the parser keeps "booking.com", "jean-paul", "2.5" or dates as single tokens that no typed
  * word can prefix. [[:punct:]] only touches punctuation, never letters (Cyrillic included).
  */
-const words = (column: string) => `regexp_replace(coalesce(${column}, ''), '[[:punct:]]', ' ', 'g')`;
+const words = (column: string) =>
+  `regexp_replace(coalesce(${column}, ''), '[[:punct:]]', ' ', 'g')`;
 
 const SEARCH_VECTOR: Record<string, string> = {
   // The phone is indexed as digits only, so "+380 (50) 123" and "38050123" both find it.
@@ -42,7 +43,9 @@ export class AddSearchVector1790600009000 implements MigrationInterface {
   public async down(q: QueryRunner): Promise<void> {
     for (const table of Object.keys(SEARCH_VECTOR)) {
       await q.query(`DROP INDEX IF EXISTS "idx_${table}_search"`);
-      await q.query(`ALTER TABLE "${table}" DROP COLUMN IF EXISTS "search_vector"`);
+      await q.query(
+        `ALTER TABLE "${table}" DROP COLUMN IF EXISTS "search_vector"`,
+      );
     }
   }
 }
