@@ -1,0 +1,94 @@
+<div class="flex h-full flex-col">
+  <div class="flex items-baseline justify-between gap-3">
+    <h1 class="text-xl font-semibold text-slate-900">{{ 'audit.title' | translate }}</h1>
+    @if (loading() && rows().length > 0) {
+      <p class="text-sm text-slate-600" role="status">{{ 'common.loading' | translate }}</p>
+    }
+  </div>
+
+  <div class="mt-4 grid shrink-0 grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto_auto] sm:items-end">
+    <label for="audit-action" class="block text-sm font-medium text-slate-700">
+      {{ 'audit.action' | translate }}
+      <select
+        id="audit-action"
+        name="action"
+        (change)="filterAction($any($event.target).value)"
+        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500"
+      >
+        <option value="" [selected]="!action()">{{ 'audit.allActions' | translate }}</option>
+        @for (g of groups; track g.key) {
+          <optgroup [label]="('auditGroup.' + g.key) | translate">
+            @for (a of g.actions; track a) {
+              <option [value]="a" [selected]="a === action()">{{ ('auditAction.' + a) | translate }}</option>
+            }
+          </optgroup>
+        }
+      </select>
+    </label>
+    <label for="audit-from" class="block text-sm font-medium text-slate-700">
+      {{ 'audit.from' | translate }}
+      <input id="audit-from" name="from" type="date" [value]="from()" (change)="filterFrom($any($event.target).value)" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500" />
+    </label>
+    <label for="audit-to" class="block text-sm font-medium text-slate-700">
+      {{ 'audit.to' | translate }}
+      <input id="audit-to" name="to" type="date" [value]="to()" (change)="filterTo($any($event.target).value)" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500" />
+    </label>
+    <button type="button" (click)="resetFilters()" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50">{{ 'common.reset' | translate }}</button>
+  </div>
+
+  @if (error()) {
+    <div class="mt-4 shrink-0 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ error() }}</div>
+  }
+
+  @if (loading() && rows().length === 0) {
+    <p class="mt-4 flex min-h-0 flex-1 items-center justify-center text-sm text-slate-500">{{ 'common.loading' | translate }}</p>
+  } @else if (rows().length === 0) {
+    <div class="mt-4 flex min-h-0 flex-1 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-600">
+      {{ 'audit.empty' | translate }}
+    </div>
+  } @else {
+    <ul class="mt-4 flex min-h-0 flex-1 flex-col gap-2 overflow-auto">
+      @for (row of rows(); track row.entry.id) {
+        @let e = row.entry;
+        <li class="rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200 sm:p-4">
+          <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <p class="font-medium text-slate-900">{{ ('auditAction.' + e.action) | translate }}</p>
+            <time class="text-xs text-slate-600" [attr.datetime]="e.createdAt">{{ e.createdAt | date: 'dd.MM.yyyy HH:mm:ss' }}</time>
+          </div>
+          <p class="mt-1 text-sm text-slate-700">
+            {{ row.actor }}
+            @if (e.actor && row.actor !== e.actor.email) { <span class="text-slate-600">· {{ e.actor.email }}</span> }
+          </p>
+          @if (row.changes.length || e.ip) {
+            <details class="mt-2 text-sm">
+              <summary class="cursor-pointer text-indigo-700 hover:underline">{{ 'audit.details' | translate }}</summary>
+              <dl class="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-slate-700">
+                @for (c of row.changes; track c.field) {
+                  <dt class="text-slate-600">{{ ('auditField.' + c.field) | translate }}</dt>
+                  <dd class="break-words">
+                    @if (c.before !== null && c.after !== null) {
+                      <span class="line-through decoration-slate-400">{{ c.before }}</span> → {{ c.after }}
+                    } @else {
+                      {{ c.after ?? c.before }}
+                    }
+                  </dd>
+                }
+                @if (e.ip) {
+                  <dt class="text-slate-600">{{ 'audit.ip' | translate }}</dt>
+                  <dd>{{ e.ip }}</dd>
+                }
+                @if (e.userAgent) {
+                  <dt class="text-slate-600">{{ 'audit.userAgent' | translate }}</dt>
+                  <dd class="break-words text-xs">{{ e.userAgent }}</dd>
+                }
+              </dl>
+            </details>
+          }
+        </li>
+      }
+    </ul>
+    <div class="mt-4 shrink-0">
+      <app-paginator [page]="page()" [total]="total()" [hasNext]="hasNext()" (pageChange)="goPage($event)" />
+    </div>
+  }
+</div>

@@ -495,6 +495,78 @@ export interface NotificationDto extends BaseEntity {
   readAt: ISODateString | null;
 }
 
+/* ============================ Audit log ============================ */
+
+/** Audited key operations (spec §6.3 Audit): sign-in, access control changes, deletions. */
+export const AUDIT_ACTIONS = {
+  AuthLogin: 'auth.login',
+  AuthLoginFailed: 'auth.login_failed',
+  AuthRegister: 'auth.register',
+  AuthPasswordChanged: 'auth.password_changed',
+  AuthLogoutAll: 'auth.logout_all',
+  /** A revoked refresh token was presented again — likely a stolen session; the whole family is revoked. */
+  AuthTokenReuse: 'auth.token_reuse',
+
+  MemberInvited: 'member.invited',
+  InvitationRevoked: 'invitation.revoked',
+  MemberJoined: 'member.joined',
+  MemberRoleChanged: 'member.role_changed',
+  MemberSuspended: 'member.suspended',
+  MemberReactivated: 'member.reactivated',
+  MemberRemoved: 'member.removed',
+
+  RoleCreated: 'role.created',
+  RoleUpdated: 'role.updated',
+  RoleDeleted: 'role.deleted',
+
+  OrganizationUpdated: 'organization.updated',
+
+  ContactDeleted: 'contact.deleted',
+  CompanyDeleted: 'company.deleted',
+  LeadDeleted: 'lead.deleted',
+  DealDeleted: 'deal.deleted',
+  TaskDeleted: 'task.deleted',
+  PipelineDeleted: 'pipeline.deleted',
+  StageDeleted: 'stage.deleted',
+} as const;
+export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];
+export const ALL_AUDIT_ACTIONS: AuditAction[] = Object.values(AUDIT_ACTIONS);
+
+export interface AuditActor {
+  id: UUID;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
+/** GET /audit-logs item. `before`/`after` hold a short snapshot (never full personal data). */
+export interface AuditLogDto {
+  id: UUID;
+  organizationId: UUID;
+  /** null — the actor is unknown or the account no longer exists. */
+  actor: AuditActor | null;
+  action: AuditAction;
+  entityType: string | null;
+  entityId: UUID | null;
+  ip: string | null;
+  userAgent: string | null;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  createdAt: ISODateString;
+}
+
+/** GET /audit-logs query (newest first). `from`/`to` are ISO timestamps (inclusive / exclusive). */
+export interface AuditLogQuery {
+  page?: number;
+  limit?: number;
+  action?: AuditAction;
+  actorId?: UUID;
+  entityType?: string;
+  entityId?: UUID;
+  from?: ISODateString;
+  to?: ISODateString;
+}
+
 /* ============================ Endpoints ============================ */
 
 export const API_PREFIX = '/api/v1';

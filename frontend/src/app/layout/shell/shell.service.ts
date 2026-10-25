@@ -16,6 +16,7 @@ const NAV: Array<NavItem & { permission?: Permission }> = [
   { path: '/tasks', label: 'nav.tasks' },
   { path: '/team', label: 'nav.team', permission: PERMISSIONS.MEMBERS_MANAGE },
   { path: '/roles', label: 'nav.roles', permission: PERMISSIONS.ROLES_MANAGE },
+  { path: '/audit', label: 'nav.audit', permission: PERMISSIONS.AUDIT_READ },
   { path: '/profile', label: 'nav.profile' },
 ];
 

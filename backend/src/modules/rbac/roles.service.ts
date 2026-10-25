@@ -8,6 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import {
+  AUDIT_ACTIONS,
   OrganizationMemberStatus,
   redisKeys,
   SystemRole,
@@ -17,6 +18,7 @@ import {
   type RoleSummaryDto,
 } from '@crm/shared';
 import { RedisService } from '../../config/redis/redis.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { PermissionEntity } from './entities/permission.entity.js';
 import { RoleEntity } from './entities/role.entity.js';
 import { RolePermissionEntity } from './entities/role-permission.entity.js';
@@ -42,6 +44,7 @@ export class RolesService {
     @InjectRepository(PermissionEntity)
     private readonly permissionRepo: Repository<PermissionEntity>,
     private readonly redis: RedisService,
+    private readonly audit: AuditService,
   ) {}
 
   /**
@@ -325,6 +328,7 @@ export class RolesService {
         const actorPermissions = await this.getUserPermissionCodes(actorId, organizationId);
         this.deny(grantDenial(actorPermissions, permissions.map((p) => p.code)));
       }
+      const before = { name: role.name, description: role.description, permissions: current };
       if (dto.name !== undefined) role.name = dto.name;
       if (dto.description !== undefined) role.description = dto.description?.trim() || null;
 
@@ -338,7 +342,19 @@ export class RolesService {
           );
         }
       }
-      return { role, codes: permissions ? permissions.map((p) => p.code) : current };
+      const codes = permissions ? permissions.map((p) => p.code) : current;
+      await this.audit.record(
+        {
+          organizationId,
+          action: AUDIT_ACTIONS.RoleUpdated,
+          entityType: 'role',
+          entityId: role.id,
+          before,
+          after: { name: role.name, description: role.description, permissions: codes },
+        },
+        manager,
+      );
+      return { role, codes };
     });
     if (permissions) {
       // Holders of the role get the new permissions on their very next request.
@@ -359,12 +375,8 @@ export class RolesService {
       // The row lock makes a concurrent assignment/invitation (FK check on the role) either commit
       // first — and be counted below — or wait and then fail, instead of being cascaded away.
       const role = await this.lockEditableRole(manager, organizationId, id, 'deleted');
-      await this.assertCanChange(
-        organizationId,
-        actorId,
-        role.id,
-        await this.permissionCodesForRole(role.id, manager),
-      );
+      const permissionCodes = await this.permissionCodesForRole(role.id, manager);
+      await this.assertCanChange(organizationId, actorId, role.id, permissionCodes);
       const { memberCount, invitationCount } =
         (await this.usageCounts(organizationId, [role.id], manager)).get(role.id) ?? NO_USAGE;
       if (memberCount || invitationCount) {
@@ -374,6 +386,16 @@ export class RolesService {
       }
       // FK ON DELETE CASCADE removes role_permissions and expired/used invitations.
       await manager.getRepository(RoleEntity).delete({ id: role.id });
+      await this.audit.record(
+        {
+          organizationId,
+          action: AUDIT_ACTIONS.RoleDeleted,
+          entityType: 'role',
+          entityId: role.id,
+          before: { name: role.name, permissions: permissionCodes },
+        },
+        manager,
+      );
     });
   }
 
@@ -401,6 +423,16 @@ export class RolesService {
           .getRepository(RolePermissionEntity)
           .insert(permissions.map((p) => ({ roleId: saved.id, permissionId: p.id })));
       }
+      await this.audit.record(
+        {
+          organizationId,
+          action: AUDIT_ACTIONS.RoleCreated,
+          entityType: 'role',
+          entityId: saved.id,
+          after: { name: saved.name, permissions: permissions.map((p) => p.code) },
+        },
+        manager,
+      );
       return saved;
     });
   }

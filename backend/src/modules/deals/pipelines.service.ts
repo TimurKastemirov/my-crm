@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
-import type { PipelineDto, PipelineStageDto } from '@crm/shared';
+import { AUDIT_ACTIONS, type PipelineDto, type PipelineStageDto } from '@crm/shared';
 import { PipelineEntity } from './entities/pipeline.entity.js';
 import { PipelineStageEntity } from './entities/pipeline-stage.entity.js';
 import { DealEntity } from './entities/deal.entity.js';
@@ -17,6 +17,7 @@ import {
   UpdatePipelineDto,
   UpdateStageDto,
 } from './dto/pipeline.dto.js';
+import { AuditService } from '../audit/audit.service.js';
 
 @Injectable()
 export class PipelinesService {
@@ -27,6 +28,7 @@ export class PipelinesService {
     private readonly stageRepo: Repository<PipelineStageEntity>,
     @InjectRepository(DealEntity)
     private readonly dealRepo: Repository<DealEntity>,
+    private readonly audit: AuditService,
   ) {}
 
   /** Default pipeline + stages when an organization is created (inside the register transaction). */
@@ -97,7 +99,19 @@ export class PipelinesService {
     if (pipeline.isDefault) throw new ForbiddenException('Cannot delete the default pipeline');
     const deals = await this.dealRepo.count({ where: { organizationId, pipelineId: id }, withDeleted: true });
     if (deals > 0) throw new BadRequestException('The pipeline has deals — deletion is not allowed');
-    await this.pipelineRepo.delete({ id }); // stages are deleted via cascade
+    await this.pipelineRepo.manager.transaction(async (manager) => {
+      await manager.delete(PipelineEntity, { id }); // stages are deleted via cascade
+      await this.audit.record(
+        {
+          organizationId,
+          action: AUDIT_ACTIONS.PipelineDeleted,
+          entityType: 'pipeline',
+          entityId: id,
+          before: { name: pipeline.name },
+        },
+        manager,
+      );
+    });
   }
 
   // ---- stages ----
@@ -139,10 +153,22 @@ export class PipelinesService {
   }
 
   async deleteStage(organizationId: string, pipelineId: string, stageId: string): Promise<void> {
-    await this.mustFindStage(organizationId, pipelineId, stageId);
+    const stage = await this.mustFindStage(organizationId, pipelineId, stageId);
     const deals = await this.dealRepo.count({ where: { organizationId, stageId }, withDeleted: true });
     if (deals > 0) throw new BadRequestException('The stage has deals — deletion is not allowed');
-    await this.stageRepo.delete({ id: stageId });
+    await this.stageRepo.manager.transaction(async (manager) => {
+      await manager.delete(PipelineStageEntity, { id: stageId });
+      await this.audit.record(
+        {
+          organizationId,
+          action: AUDIT_ACTIONS.StageDeleted,
+          entityType: 'stage',
+          entityId: stageId,
+          before: { name: stage.name },
+        },
+        manager,
+      );
+    });
   }
 
   /** Default pipeline + first stage — for lead conversion. */

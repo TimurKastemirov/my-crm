@@ -35,6 +35,11 @@ export const routes: Routes = [
         canActivate: [permissionGuard(PERMISSIONS.ROLES_MANAGE)],
         loadComponent: () => import('./features/roles/roles-page').then((m) => m.RolesPageComponent),
       },
+      {
+        path: 'audit',
+        canActivate: [permissionGuard(PERMISSIONS.AUDIT_READ)],
+        loadComponent: () => import('./features/audit/audit-page').then((m) => m.AuditPageComponent),
+      },
       { path: 'profile', loadComponent: () => import('./features/profile/profile-page').then((m) => m.ProfilePageComponent) },
       {
         path: 'team',

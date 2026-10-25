@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsOrder, FindOptionsWhere, ILike, Repository } from 'typeorm';
+import { FindOptionsOrder, FindOptionsWhere, ILike, Repository, IsNull } from 'typeorm';
 import {
+  AUDIT_ACTIONS,
   OrganizationMemberStatus,
   TaskStatus,
   type Paginated,
@@ -15,6 +16,7 @@ import {
   resolveSort,
   toPaginated,
 } from '../../common/pagination.js';
+import { AuditService } from '../audit/audit.service.js';
 
 const SORTABLE = ['createdAt', 'updatedAt', 'dueAt', 'priority', 'status', 'title'] as const;
 
@@ -25,6 +27,7 @@ export class TasksService {
     private readonly repo: Repository<TaskEntity>,
     @InjectRepository(OrganizationMemberEntity)
     private readonly memberRepo: Repository<OrganizationMemberEntity>,
+    private readonly audit: AuditService,
   ) {}
 
   async list(organizationId: string, query: TaskQueryDto): Promise<Paginated<TaskDto>> {
@@ -91,8 +94,23 @@ export class TasksService {
   }
 
   async remove(organizationId: string, id: string): Promise<void> {
-    await this.mustFind(organizationId, id);
-    await this.repo.softDelete({ id });
+    const entity = await this.mustFind(organizationId, id);
+    // Soft delete and its audit entry commit together; only a short snapshot is kept.
+    await this.repo.manager.transaction(async (manager) => {
+      // Only a live row: a concurrent delete of the same record must not be audited twice.
+      const result = await manager.softDelete(TaskEntity, { id, deletedAt: IsNull() });
+      if (!result.affected) throw new NotFoundException('Task not found');
+      await this.audit.record(
+        {
+          organizationId,
+          action: AUDIT_ACTIONS.TaskDeleted,
+          entityType: 'task',
+          entityId: id,
+          before: { title: entity.title },
+        },
+        manager,
+      );
+    });
   }
 
   private async assertAssignee(organizationId: string, assigneeId: string | undefined): Promise<void> {

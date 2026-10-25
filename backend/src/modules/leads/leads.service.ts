@@ -4,8 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsOrder, FindOptionsWhere, ILike, Repository } from 'typeorm';
-import { LeadStatus, type DealDto, type LeadDto, type Paginated } from '@crm/shared';
+import { FindOptionsOrder, FindOptionsWhere, ILike, Repository, IsNull } from 'typeorm';
+import { AUDIT_ACTIONS, LeadStatus, type DealDto, type LeadDto, type Paginated } from '@crm/shared';
 import { LeadEntity } from './entities/lead.entity.js';
 import { ContactEntity } from '../contacts/entities/contact.entity.js';
 import { CompanyEntity } from '../companies/entities/company.entity.js';
@@ -20,6 +20,7 @@ import {
   resolveSort,
   toPaginated,
 } from '../../common/pagination.js';
+import { AuditService } from '../audit/audit.service.js';
 
 const SORTABLE = ['createdAt', 'updatedAt', 'status', 'estimatedValue'] as const;
 
@@ -34,6 +35,7 @@ export class LeadsService {
     private readonly companyRepo: Repository<CompanyEntity>,
     private readonly dealsService: DealsService,
     private readonly pipelinesService: PipelinesService,
+    private readonly audit: AuditService,
   ) {}
 
   async list(organizationId: string, query: LeadQueryDto): Promise<Paginated<LeadDto>> {
@@ -116,8 +118,23 @@ export class LeadsService {
   }
 
   async remove(organizationId: string, id: string): Promise<void> {
-    await this.mustFind(organizationId, id);
-    await this.repo.softDelete({ id });
+    const entity = await this.mustFind(organizationId, id);
+    // Soft delete and its audit entry commit together; only a short snapshot is kept.
+    await this.repo.manager.transaction(async (manager) => {
+      // Only a live row: a concurrent delete of the same record must not be audited twice.
+      const result = await manager.softDelete(LeadEntity, { id, deletedAt: IsNull() });
+      if (!result.affected) throw new NotFoundException('Lead not found');
+      await this.audit.record(
+        {
+          organizationId,
+          action: AUDIT_ACTIONS.LeadDeleted,
+          entityType: 'lead',
+          entityId: id,
+          before: { source: entity.source, status: entity.status },
+        },
+        manager,
+      );
+    });
   }
 
   /** Converts a lead into a deal: creates the deal and marks the lead as converted. */

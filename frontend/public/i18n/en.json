@@ -40,7 +40,8 @@
     "tasks": "Tasks",
     "team": "Team",
     "profile": "Profile",
-    "roles": "Roles"
+    "roles": "Roles",
+    "audit": "Audit log"
   },
   "a11y": {
     "openMenu": "Open menu",
@@ -340,5 +341,99 @@
     "saveError": "Failed to save the role",
     "deleteError": "Failed to delete the role",
     "empty": "No roles to show"
+  },
+  "auditAction": {
+    "auth": {
+      "login": "Signed in",
+      "login_failed": "Failed sign-in",
+      "register": "Registered the organization",
+      "password_changed": "Changed the password",
+      "logout_all": "Signed out of all devices",
+      "token_reuse": "Reused a revoked session token (possible theft)"
+    },
+    "member": {
+      "invited": "Invited a member",
+      "joined": "Joined the organization",
+      "role_changed": "Changed a member’s role",
+      "suspended": "Suspended a member",
+      "reactivated": "Reactivated a member",
+      "removed": "Removed a member"
+    },
+    "invitation": {
+      "revoked": "Revoked an invitation"
+    },
+    "role": {
+      "created": "Created a role",
+      "updated": "Changed a role",
+      "deleted": "Deleted a role"
+    },
+    "organization": {
+      "updated": "Renamed the organization"
+    },
+    "contact": {
+      "deleted": "Deleted a contact"
+    },
+    "company": {
+      "deleted": "Deleted a company"
+    },
+    "lead": {
+      "deleted": "Deleted a lead"
+    },
+    "deal": {
+      "deleted": "Deleted a deal"
+    },
+    "task": {
+      "deleted": "Deleted a task"
+    },
+    "pipeline": {
+      "deleted": "Deleted a pipeline"
+    },
+    "stage": {
+      "deleted": "Deleted a pipeline stage"
+    }
+  },
+  "auditGroup": {
+    "auth": "Sign-in",
+    "member": "Members",
+    "invitation": "Invitations",
+    "role": "Roles",
+    "organization": "Organization",
+    "contact": "Contacts",
+    "company": "Companies",
+    "lead": "Leads",
+    "deal": "Deals",
+    "task": "Tasks",
+    "pipeline": "Pipelines",
+    "stage": "Pipeline stages"
+  },
+  "auditField": {
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "permissions": "Permissions",
+    "description": "Description",
+    "title": "Title",
+    "source": "Source",
+    "status": "Status",
+    "reason": "Reason",
+    "organization": "Organization"
+  },
+  "auditReason": {
+    "invalid_password": "wrong password",
+    "account_inactive": "account disabled",
+    "no_active_membership": "no active membership"
+  },
+  "audit": {
+    "title": "Audit log",
+    "action": "Action",
+    "allActions": "All actions",
+    "from": "From",
+    "to": "To",
+    "empty": "No entries for these filters",
+    "details": "Details",
+    "ip": "IP address",
+    "userAgent": "Browser",
+    "unknownActor": "Unknown user",
+    "loadError": "Failed to load the audit log"
   }
 }

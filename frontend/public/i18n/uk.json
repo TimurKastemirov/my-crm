@@ -40,7 +40,8 @@
     "tasks": "Завдання",
     "team": "Команда",
     "profile": "Профіль",
-    "roles": "Ролі"
+    "roles": "Ролі",
+    "audit": "Журнал аудиту"
   },
   "a11y": {
     "openMenu": "Відкрити меню",
@@ -340,5 +341,99 @@
     "saveError": "Не вдалося зберегти роль",
     "deleteError": "Не вдалося видалити роль",
     "empty": "Немає ролей для відображення"
+  },
+  "auditAction": {
+    "auth": {
+      "login": "Вхід",
+      "login_failed": "Невдалий вхід",
+      "register": "Реєстрація організації",
+      "password_changed": "Зміна пароля",
+      "logout_all": "Вихід на всіх пристроях",
+      "token_reuse": "Повторне використання відкликаної сесії (можлива крадіжка)"
+    },
+    "member": {
+      "invited": "Запрошення учасника",
+      "joined": "Приєднання до організації",
+      "role_changed": "Зміна ролі учасника",
+      "suspended": "Призупинення учасника",
+      "reactivated": "Відновлення учасника",
+      "removed": "Видалення учасника"
+    },
+    "invitation": {
+      "revoked": "Відкликання запрошення"
+    },
+    "role": {
+      "created": "Створення ролі",
+      "updated": "Зміна ролі",
+      "deleted": "Видалення ролі"
+    },
+    "organization": {
+      "updated": "Перейменування організації"
+    },
+    "contact": {
+      "deleted": "Видалення клієнта"
+    },
+    "company": {
+      "deleted": "Видалення компанії"
+    },
+    "lead": {
+      "deleted": "Видалення ліда"
+    },
+    "deal": {
+      "deleted": "Видалення угоди"
+    },
+    "task": {
+      "deleted": "Видалення завдання"
+    },
+    "pipeline": {
+      "deleted": "Видалення воронки"
+    },
+    "stage": {
+      "deleted": "Видалення етапу воронки"
+    }
+  },
+  "auditGroup": {
+    "auth": "Вхід",
+    "member": "Учасники",
+    "invitation": "Запрошення",
+    "role": "Ролі",
+    "organization": "Організація",
+    "contact": "Клієнти",
+    "company": "Компанії",
+    "lead": "Ліди",
+    "deal": "Угоди",
+    "task": "Завдання",
+    "pipeline": "Воронки",
+    "stage": "Етапи воронки"
+  },
+  "auditField": {
+    "name": "Назва",
+    "email": "Email",
+    "role": "Роль",
+    "permissions": "Права",
+    "description": "Опис",
+    "title": "Назва",
+    "source": "Джерело",
+    "status": "Статус",
+    "reason": "Причина",
+    "organization": "Організація"
+  },
+  "auditReason": {
+    "invalid_password": "невірний пароль",
+    "account_inactive": "акаунт вимкнено",
+    "no_active_membership": "немає активного членства"
+  },
+  "audit": {
+    "title": "Журнал аудиту",
+    "action": "Дія",
+    "allActions": "Усі дії",
+    "from": "З",
+    "to": "По",
+    "empty": "Немає записів за цими фільтрами",
+    "details": "Докладніше",
+    "ip": "IP-адреса",
+    "userAgent": "Браузер",
+    "unknownActor": "Невідомий користувач",
+    "loadError": "Не вдалося завантажити журнал аудиту"
   }
 }

@@ -14,6 +14,7 @@ import {
   Repository,
 } from 'typeorm';
 import {
+  AUDIT_ACTIONS,
   OrganizationMemberStatus,
   type CreateInvitationResult,
   type InvitationDto,
@@ -21,6 +22,7 @@ import {
   type RoleRef,
 } from '@crm/shared';
 import { RolesService } from '../rbac/roles.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { UserRoleEntity } from '../rbac/entities/user-role.entity.js';
 import { UserEntity } from '../users/entities/user.entity.js';
 import { RefreshTokenEntity } from '../auth/entities/refresh-token.entity.js';
@@ -47,6 +49,7 @@ export class MembersService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly roles: RolesService,
+    private readonly audit: AuditService,
     @InjectRepository(OrganizationMemberEntity)
     private readonly memberRepo: Repository<OrganizationMemberEntity>,
     @InjectRepository(OrganizationInvitationEntity)
@@ -110,7 +113,7 @@ export class MembersService {
           { organizationId, email, acceptedAt: IsNull(), revokedAt: IsNull() },
           { revokedAt: new Date() },
         );
-        return repo.save(
+        const saved = await repo.save(
           repo.create({
             organizationId,
             email,
@@ -120,6 +123,17 @@ export class MembersService {
             expiresAt: new Date(Date.now() + INVITATION_TTL_MS),
           }),
         );
+        await this.audit.record(
+          {
+            organizationId,
+            action: AUDIT_ACTIONS.MemberInvited,
+            entityType: 'invitation',
+            entityId: saved.id,
+            after: { email, role: role.name },
+          },
+          manager,
+        );
+        return saved;
       })
       .catch((error: unknown) => {
         // A concurrent invitation for the same email won the partial unique index.
@@ -158,13 +172,27 @@ export class MembersService {
   }
 
   async revokeInvitation(organizationId: string, id: string): Promise<void> {
-    const result = await this.invitationRepo.update(
-      { id, organizationId, acceptedAt: IsNull(), revokedAt: IsNull() },
-      { revokedAt: new Date() },
-    );
-    if (!result.affected) {
-      throw new NotFoundException('Invitation not found');
-    }
+    await this.dataSource.transaction(async (manager) => {
+      const repo = manager.getRepository(OrganizationInvitationEntity);
+      const invitation = await repo.findOne({ where: { id, organizationId } });
+      const result = await repo.update(
+        { id, organizationId, acceptedAt: IsNull(), revokedAt: IsNull() },
+        { revokedAt: new Date() },
+      );
+      if (!invitation || !result.affected) {
+        throw new NotFoundException('Invitation not found');
+      }
+      await this.audit.record(
+        {
+          organizationId,
+          action: AUDIT_ACTIONS.InvitationRevoked,
+          entityType: 'invitation',
+          entityId: id,
+          before: { email: invitation.email },
+        },
+        manager,
+      );
+    });
   }
 
   /** Changes the member's role and/or status (active ↔ suspended). */
@@ -185,9 +213,12 @@ export class MembersService {
       dto.roleId !== undefined
         ? await this.assignableRole(organizationId, actorId, dto.roleId)
         : null;
-
     await this.dataSource
       .transaction(async (manager) => {
+        // Serialize changes of one member so `previous` (the audited "before") is accurate.
+        await this.lockMember(manager, member.id);
+        const previous = await this.describeMember(organizationId, member.userId);
+        const { email } = previous;
         if (role) {
           await this.roles.setUserRole(
             manager,
@@ -195,11 +226,25 @@ export class MembersService {
             member.userId,
             role.id,
           );
+          if (role.id !== previous.roleId) {
+            await this.audit.record(
+              {
+                organizationId,
+                action: AUDIT_ACTIONS.MemberRoleChanged,
+                entityType: 'member',
+                entityId: member.id,
+                before: { email, role: previous.roleName },
+                after: { email, role: role.name },
+              },
+              manager,
+            );
+          }
         }
         if (dto.status !== undefined && dto.status !== member.status) {
           member.status = dto.status;
           await manager.getRepository(OrganizationMemberEntity).save(member);
-          if (dto.status === OrganizationMemberStatus.Suspended) {
+          const suspended = dto.status === OrganizationMemberStatus.Suspended;
+          if (suspended) {
             await this.revokeSessions(manager, organizationId, member.userId);
             await this.revokeInvitationsBy(
               manager,
@@ -207,6 +252,18 @@ export class MembersService {
               member.userId,
             );
           }
+          await this.audit.record(
+            {
+              organizationId,
+              action: suspended
+                ? AUDIT_ACTIONS.MemberSuspended
+                : AUDIT_ACTIONS.MemberReactivated,
+              entityType: 'member',
+              entityId: member.id,
+              after: { email },
+            },
+            manager,
+          );
         }
       })
       .catch((error: unknown) => {
@@ -231,8 +288,12 @@ export class MembersService {
   ): Promise<void> {
     const member = await this.mustFindMember(organizationId, memberId);
     await this.assertCanChange(organizationId, actorId, member.userId);
-
     await this.dataSource.transaction(async (manager) => {
+      await this.lockMember(manager, member.id);
+      const { email, roleName } = await this.describeMember(
+        organizationId,
+        member.userId,
+      );
       await manager
         .getRepository(UserRoleEntity)
         .delete({ organizationId, userId: member.userId });
@@ -241,11 +302,52 @@ export class MembersService {
         .delete({ id: member.id });
       await this.revokeSessions(manager, organizationId, member.userId);
       await this.revokeInvitationsBy(manager, organizationId, member.userId);
+      await this.audit.record(
+        {
+          organizationId,
+          action: AUDIT_ACTIONS.MemberRemoved,
+          entityType: 'member',
+          entityId: member.id,
+          before: { email, role: roleName },
+        },
+        manager,
+      );
     });
     await this.roles.invalidateUserPermissions(organizationId, member.userId);
   }
 
   // ---------- helpers ----------
+
+  private async lockMember(manager: EntityManager, memberId: string): Promise<void> {
+    const locked = await manager.getRepository(OrganizationMemberEntity).findOne({
+      where: { id: memberId },
+      lock: { mode: 'pessimistic_write' },
+    });
+    if (!locked) {
+      throw new NotFoundException('Member not found');
+    }
+  }
+
+  /** Email and current role name of a member — the readable part of audit entries. */
+  private async describeMember(
+    organizationId: string,
+    userId: string,
+  ): Promise<{
+    email: string | null;
+    roleId: string | null;
+    roleName: string | null;
+  }> {
+    const [user, roles] = await Promise.all([
+      this.userRepo.findOne({ where: { id: userId } }),
+      this.roles.rolesByUser(organizationId, [userId]),
+    ]);
+    const role = roles.get(userId);
+    return {
+      email: user?.email ?? null,
+      roleId: role?.id ?? null,
+      roleName: role?.name ?? null,
+    };
+  }
 
   private async actor(
     organizationId: string,

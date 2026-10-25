@@ -11,6 +11,7 @@ import { DataSource, IsNull, Not, Repository } from 'typeorm';
 import { hash as argonHash, verify as argonVerify } from '@node-rs/argon2';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import {
+  AUDIT_ACTIONS,
   OrganizationMemberStatus,
   PERMISSIONS,
   type AppLocale,
@@ -31,6 +32,7 @@ import {
   isInvitationPending,
 } from '../organizations/invitation-token.js';
 import { RoleEntity } from '../rbac/entities/role.entity.js';
+import { AuditService } from '../audit/audit.service.js';
 import { roleAssignmentDenial } from '../organizations/member-policy.js';
 import { isForeignKeyViolation, isUniqueViolation } from '../../common/db-errors.js';
 import { RefreshTokenEntity } from './entities/refresh-token.entity.js';
@@ -43,6 +45,9 @@ import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { AcceptInvitationDto } from './dto/accept-invitation.dto.js';
 import { ChangePasswordDto } from './dto/change-password.dto.js';
+
+/** Failed sign-ins of one account are recorded at most once per organization in this window. */
+const FAILED_LOGIN_AUDIT_WINDOW_MS = 60_000;
 
 interface RequestMeta {
   userAgent?: string | null;
@@ -58,6 +63,7 @@ export class AuthService {
     private readonly config: ConfigService,
     private readonly rolesService: RolesService,
     private readonly pipelinesService: PipelinesService,
+    private readonly audit: AuditService,
     @InjectRepository(RefreshTokenEntity)
     private readonly refreshRepo: Repository<RefreshTokenEntity>,
   ) {}
@@ -108,6 +114,17 @@ export class AuthService {
         await this.rolesService.provisionOrganization(manager, org.id, createdUser.id);
         // Default sales pipeline with stages.
         await this.pipelinesService.provisionDefault(manager, org.id);
+        await this.audit.record(
+          {
+            organizationId: org.id,
+            action: AUDIT_ACTIONS.AuthRegister,
+            actorId: createdUser.id,
+            entityType: 'organization',
+            entityId: org.id,
+            after: { organization: org.name, email: createdUser.email },
+          },
+          manager,
+        );
 
         return { user: createdUser, organizationId: org.id };
       },
@@ -120,22 +137,38 @@ export class AuthService {
   /** Login by email + password. The active organization is the first active membership. */
   async login(dto: LoginDto, meta: RequestMeta): Promise<AuthResult> {
     const user = await this.usersService.findByEmail(dto.email);
-    if (!user || !user.isActive) {
+    if (!user) {
+      // Unknown email: nothing to attribute an audit entry to.
+      throw new UnauthorizedException('Invalid email or password');
+    }
+    if (!user.isActive) {
+      await this.recordFailedLogin(user, 'account_inactive');
       throw new UnauthorizedException('Invalid email or password');
     }
     const passwordOk = await argonVerify(user.passwordHash, dto.password);
     if (!passwordOk) {
+      await this.recordFailedLogin(user, 'invalid_password');
       throw new UnauthorizedException('Invalid email or password');
     }
 
     const organizationId = await this.primaryOrganizationId(user.id);
     if (!organizationId) {
+      await this.recordFailedLogin(user, 'no_active_membership');
       throw new UnauthorizedException('The user has no active organization');
     }
 
     await this.applyChosenLocale(user, dto.locale);
     await this.usersService.updateLastLogin(user.id);
     const tokens = await this.issueTokens(user, organizationId, randomUUID(), meta);
+    await this.audit.recordBestEffort([
+      {
+        organizationId,
+        action: AUDIT_ACTIONS.AuthLogin,
+        actorId: user.id,
+        entityType: 'user',
+        entityId: user.id,
+      },
+    ]);
     return { user: this.toUserDto(user), tokens };
   }
 
@@ -153,6 +186,15 @@ export class AuthService {
         { familyId: record.familyId },
         { revokedAt: new Date() },
       );
+      await this.audit.recordBestEffort([
+        {
+          organizationId: record.organizationId,
+          action: AUDIT_ACTIONS.AuthTokenReuse,
+          actorId: record.userId,
+          entityType: 'user',
+          entityId: record.userId,
+        },
+      ]);
       throw new UnauthorizedException('Token reuse detected');
     }
     if (record.expiresAt.getTime() < Date.now()) {
@@ -222,16 +264,37 @@ export class AuthService {
         { userId: user.id, revokedAt: IsNull(), familyId: Not(familyId) },
         { revokedAt: new Date() },
       );
+      await this.audit.record(
+        {
+          organizationId: payload.organizationId,
+          action: AUDIT_ACTIONS.AuthPasswordChanged,
+          actorId: user.id,
+          entityType: 'user',
+          entityId: user.id,
+        },
+        manager,
+      );
       return tokens;
     });
   }
 
   /** Logout from all devices: revoke all of the user's active tokens. */
-  async logoutAll(userId: string): Promise<void> {
+  async logoutAll(userId: string, organizationId?: string): Promise<void> {
     await this.refreshRepo.update(
       { userId, revokedAt: IsNull() },
       { revokedAt: new Date() },
     );
+    if (organizationId) {
+      await this.audit.recordBestEffort([
+        {
+          organizationId,
+          action: AUDIT_ACTIONS.AuthLogoutAll,
+          actorId: userId,
+          entityType: 'user',
+          entityId: userId,
+        },
+      ]);
+    }
   }
 
   /** Current session. */
@@ -351,6 +414,20 @@ export class AuthService {
         member.id,
         invitation.roleId,
       );
+      const role = await manager
+        .getRepository(RoleEntity)
+        .findOne({ where: { id: invitation.roleId } });
+      await this.audit.record(
+        {
+          organizationId: invitation.organizationId,
+          action: AUDIT_ACTIONS.MemberJoined,
+          actorId: member.id,
+          entityType: 'invitation',
+          entityId: invitation.id,
+          after: { email: member.email, role: role?.name ?? null },
+        },
+        manager,
+      );
       return member;
     }).catch((error: unknown) => {
       // The invited role was deleted meanwhile.
@@ -407,6 +484,26 @@ export class AuthService {
 
   private hashToken(raw: string): string {
     return createHash('sha256').update(raw).digest('hex');
+  }
+
+  /** A failed sign-in to an existing account is recorded in every organization the person belongs to. */
+  private async recordFailedLogin(user: UserEntity, reason: string): Promise<void> {
+    const memberships = await this.dataSource
+      .getRepository(OrganizationMemberEntity)
+      .find({ where: { userId: user.id } });
+    // Anyone who knows the email can trigger this: at most one entry per person and organization
+    // per minute, and a failing write never turns the 401 into a 500.
+    await this.audit.recordThrottled(
+      memberships.map((m) => ({
+        organizationId: m.organizationId,
+        action: AUDIT_ACTIONS.AuthLoginFailed,
+        actorId: user.id,
+        entityType: 'user',
+        entityId: user.id,
+        after: { reason },
+      })),
+      FAILED_LOGIN_AUDIT_WINDOW_MS,
+    );
   }
 
   /** A language picked explicitly before signing in wins over the saved one and is stored in the profile. */

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsOrder, FindOptionsWhere, ILike, Repository } from 'typeorm';
-import type { ContactDto, Paginated } from '@crm/shared';
+import { FindOptionsOrder, FindOptionsWhere, ILike, Repository, IsNull } from 'typeorm';
+import { AUDIT_ACTIONS, type ContactDto, type Paginated } from '@crm/shared';
 import { ContactEntity } from './entities/contact.entity.js';
 import { CompanyEntity } from '../companies/entities/company.entity.js';
 import { CreateContactDto, UpdateContactDto } from './dto/contact.dto.js';
@@ -11,6 +11,7 @@ import {
   resolveSort,
   toPaginated,
 } from '../../common/pagination.js';
+import { AuditService } from '../audit/audit.service.js';
 
 const SORTABLE = ['createdAt', 'updatedAt', 'lastName', 'firstName'] as const;
 
@@ -21,6 +22,7 @@ export class ContactsService {
     private readonly repo: Repository<ContactEntity>,
     @InjectRepository(CompanyEntity)
     private readonly companyRepo: Repository<CompanyEntity>,
+    private readonly audit: AuditService,
   ) {}
 
   async list(organizationId: string, query: ListQueryDto): Promise<Paginated<ContactDto>> {
@@ -92,8 +94,23 @@ export class ContactsService {
   }
 
   async remove(organizationId: string, id: string): Promise<void> {
-    await this.mustFind(organizationId, id);
-    await this.repo.softDelete({ id });
+    const entity = await this.mustFind(organizationId, id);
+    // Soft delete and its audit entry commit together; only a short snapshot is kept.
+    await this.repo.manager.transaction(async (manager) => {
+      // Only a live row: a concurrent delete of the same record must not be audited twice.
+      const result = await manager.softDelete(ContactEntity, { id, deletedAt: IsNull() });
+      if (!result.affected) throw new NotFoundException('Contact not found');
+      await this.audit.record(
+        {
+          organizationId,
+          action: AUDIT_ACTIONS.ContactDeleted,
+          entityType: 'contact',
+          entityId: id,
+          before: { name: `${entity.firstName} ${entity.lastName}`.trim() },
+        },
+        manager,
+      );
+    });
   }
 
   private async assertCompanyInOrg(

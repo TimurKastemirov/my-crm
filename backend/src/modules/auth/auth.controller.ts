@@ -107,7 +107,7 @@ export class AuthController {
   @ApiNoContentResponse({ description: 'All tokens revoked' })
   @ApiUnauthorizedResponse({ description: 'A valid access token is required' })
   async logoutAll(@CurrentUser() user: JwtPayload): Promise<void> {
-    await this.auth.logoutAll(user.sub);
+    await this.auth.logoutAll(user.sub, user.organizationId);
   }
 
   @Get('me')

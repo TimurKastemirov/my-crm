@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsOrder, FindOptionsWhere, ILike, Repository } from 'typeorm';
-import { DealStatus, type DealDto, type Paginated } from '@crm/shared';
+import { FindOptionsOrder, FindOptionsWhere, ILike, Repository, IsNull } from 'typeorm';
+import { AUDIT_ACTIONS, DealStatus, type DealDto, type Paginated } from '@crm/shared';
 import { DealEntity } from './entities/deal.entity.js';
 import { PipelineStageEntity } from './entities/pipeline-stage.entity.js';
 import { ContactEntity } from '../contacts/entities/contact.entity.js';
@@ -12,6 +12,7 @@ import {
   resolveSort,
   toPaginated,
 } from '../../common/pagination.js';
+import { AuditService } from '../audit/audit.service.js';
 
 const SORTABLE = ['createdAt', 'updatedAt', 'amount', 'title', 'expectedCloseDate'] as const;
 
@@ -26,6 +27,7 @@ export class DealsService {
     private readonly contactRepo: Repository<ContactEntity>,
     @InjectRepository(CompanyEntity)
     private readonly companyRepo: Repository<CompanyEntity>,
+    private readonly audit: AuditService,
   ) {}
 
   async list(organizationId: string, query: DealQueryDto): Promise<Paginated<DealDto>> {
@@ -134,8 +136,23 @@ export class DealsService {
   }
 
   async remove(organizationId: string, id: string): Promise<void> {
-    await this.mustFind(organizationId, id);
-    await this.repo.softDelete({ id });
+    const entity = await this.mustFind(organizationId, id);
+    // Soft delete and its audit entry commit together; only a short snapshot is kept.
+    await this.repo.manager.transaction(async (manager) => {
+      // Only a live row: a concurrent delete of the same record must not be audited twice.
+      const result = await manager.softDelete(DealEntity, { id, deletedAt: IsNull() });
+      if (!result.affected) throw new NotFoundException('Deal not found');
+      await this.audit.record(
+        {
+          organizationId,
+          action: AUDIT_ACTIONS.DealDeleted,
+          entityType: 'deal',
+          entityId: id,
+          before: { title: entity.title },
+        },
+        manager,
+      );
+    });
   }
 
   private async assertStage(

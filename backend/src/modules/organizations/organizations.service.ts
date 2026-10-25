@@ -1,7 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import type { OrganizationDto, UpdateOrganizationRequest } from '@crm/shared';
+import {
+  AUDIT_ACTIONS,
+  type OrganizationDto,
+  type UpdateOrganizationRequest,
+} from '@crm/shared';
+import { AuditService } from '../audit/audit.service.js';
 import { OrganizationEntity } from './entities/organization.entity.js';
 
 @Injectable()
@@ -9,6 +14,7 @@ export class OrganizationsService {
   constructor(
     @InjectRepository(OrganizationEntity)
     private readonly repo: Repository<OrganizationEntity>,
+    private readonly audit: AuditService,
   ) {}
 
   findById(id: string): Promise<OrganizationEntity | null> {
@@ -25,8 +31,22 @@ export class OrganizationsService {
     dto: UpdateOrganizationRequest,
   ): Promise<OrganizationDto> {
     const org = await this.mustFind(id);
+    const before = { name: org.name };
     org.name = dto.name.trim();
-    await this.repo.save(org);
+    await this.repo.manager.transaction(async (manager) => {
+      await manager.save(org);
+      await this.audit.record(
+        {
+          organizationId: id,
+          action: AUDIT_ACTIONS.OrganizationUpdated,
+          entityType: 'organization',
+          entityId: id,
+          before,
+          after: { name: org.name },
+        },
+        manager,
+      );
+    });
     return this.toDto(org);
   }
 
