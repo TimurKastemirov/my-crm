@@ -32,7 +32,7 @@ import {
 } from '../organizations/invitation-token.js';
 import { RoleEntity } from '../rbac/entities/role.entity.js';
 import { roleAssignmentDenial } from '../organizations/member-policy.js';
-import { isUniqueViolation } from '../../common/db-errors.js';
+import { isForeignKeyViolation, isUniqueViolation } from '../../common/db-errors.js';
 import { RefreshTokenEntity } from './entities/refresh-token.entity.js';
 import { UsersService } from '../users/users.service.js';
 import { OrganizationsService } from '../organizations/organizations.service.js';
@@ -353,6 +353,10 @@ export class AuthService {
       );
       return member;
     }).catch((error: unknown) => {
+      // The invited role was deleted meanwhile.
+      if (isForeignKeyViolation(error)) {
+        throw new BadRequestException('The invitation is no longer valid');
+      }
       // A concurrent registration/accept created the same account (unique email) first.
       if (isUniqueViolation(error)) {
         throw new ConflictException('An account with this email was just created; try again');

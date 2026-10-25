@@ -289,6 +289,30 @@ export interface RoleDto extends BaseEntity {
   permissions: Permission[];
 }
 
+/** GET /roles item: a role plus where it is used (a used role cannot be deleted). */
+export interface RoleSummaryDto extends RoleDto {
+  memberCount: number;
+  /** Pending (not accepted, not revoked, not expired) invitations with this role. */
+  invitationCount: number;
+  /** The requesting user holds this role (their own role can't be edited). */
+  assignedToMe: boolean;
+}
+
+/** POST /roles. The machine `code` is generated from the name when omitted. */
+export interface CreateRoleRequest {
+  name: string;
+  description?: string;
+  permissions: Permission[];
+  code?: string;
+}
+
+/** PATCH /roles/:id. `permissions` replaces the whole set. */
+export interface UpdateRoleRequest {
+  name?: string;
+  description?: string | null;
+  permissions?: Permission[];
+}
+
 /* ============================ Organization & members ============================ */
 
 /** PATCH /organizations/current */

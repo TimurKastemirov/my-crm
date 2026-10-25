@@ -21,7 +21,9 @@
     "updatedAt": "Updated",
     "status": "Status",
     "ascending": "Ascending",
-    "descending": "Descending"
+    "descending": "Descending",
+    "close": "Close",
+    "retry": "Retry"
   },
   "lang": {
     "label": "Language",
@@ -37,7 +39,8 @@
     "deals": "Deals",
     "tasks": "Tasks",
     "team": "Team",
-    "profile": "Profile"
+    "profile": "Profile",
+    "roles": "Roles"
   },
   "a11y": {
     "openMenu": "Open menu",
@@ -280,5 +283,62 @@
     "logoutEverywhere": "Sign out of all devices",
     "logoutEverywhereConfirm": "Sign out of all devices, including this one?",
     "logoutEverywhereError": "Failed to sign out of all devices"
+  },
+  "systemRole": {
+    "owner": "Owner",
+    "admin": "Admin",
+    "manager": "Manager",
+    "agent": "Agent",
+    "viewer": "Viewer"
+  },
+  "permissionGroup": {
+    "contacts": "Contacts",
+    "companies": "Companies",
+    "leads": "Leads",
+    "deals": "Deals",
+    "pipelines": "Pipelines",
+    "tasks": "Tasks",
+    "comments": "Comments",
+    "attachments": "Attachments",
+    "members": "Members",
+    "roles": "Roles",
+    "organizations": "Organization",
+    "audit": "Audit log",
+    "data": "Data import/export"
+  },
+  "permissionAction": {
+    "read": "View",
+    "create": "Create",
+    "update": "Edit",
+    "delete": "Delete",
+    "convert": "Convert",
+    "manage": "Manage",
+    "import": "Import",
+    "export": "Export"
+  },
+  "roles": {
+    "title": "Roles",
+    "add": "+ Role",
+    "system": "System",
+    "view": "View",
+    "yourRole": "your role",
+    "permissionCount": "Permissions: {{count}}",
+    "memberCount": "Members: {{count}}",
+    "invitationCount": "Pending invitations: {{count}}",
+    "inUseHint": "Assigned to members or pending invitations — move them to another role before deleting.",
+    "newTitle": "New role",
+    "editTitle": "Edit role",
+    "viewTitle": "Role",
+    "name": "Name",
+    "description": "Description",
+    "grantHint": "You can grant only permissions you have yourself.",
+    "lockSystem": "System roles are built in and cannot be changed.",
+    "lockOwn": "This is your role — you cannot change it yourself.",
+    "lockStronger": "This role has permissions you don’t have, so you cannot change it.",
+    "deleteConfirm": "Delete the role \"{{name}}\"?",
+    "loadError": "Failed to load roles",
+    "saveError": "Failed to save the role",
+    "deleteError": "Failed to delete the role",
+    "empty": "No roles to show"
   }
 }

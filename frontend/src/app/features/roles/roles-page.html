@@ -1,0 +1,133 @@
+<div class="flex h-full flex-col">
+  <div class="flex items-center justify-between gap-3">
+    <h1 class="text-xl font-semibold text-slate-900">{{ 'roles.title' | translate }}</h1>
+    <button type="button" (click)="openCreate()" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-500">
+      {{ 'roles.add' | translate }}
+    </button>
+  </div>
+
+  @if (error()) {
+    <div class="mt-4 shrink-0 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ error() }}</div>
+  }
+
+  @if (loading() && roles().length === 0) {
+    <p class="mt-4 flex min-h-0 flex-1 items-center justify-center text-sm text-slate-500">{{ 'common.loading' | translate }}</p>
+  } @else if (roles().length === 0) {
+    <div class="mt-4 flex min-h-0 flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-600">
+      {{ 'roles.empty' | translate }}
+      <button type="button" (click)="load()" class="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">{{ 'common.retry' | translate }}</button>
+    </div>
+  } @else {
+    <ul class="mt-4 grid min-h-0 flex-1 grid-cols-1 content-start gap-3 overflow-auto md:grid-cols-2 xl:grid-cols-3">
+      @for (r of roles(); track r.id) {
+        <li class="flex flex-col rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+          <div class="flex items-start justify-between gap-2">
+            <p class="min-w-0 truncate font-medium text-slate-900">
+              @if (r.isSystem) { {{ ('systemRole.' + r.code) | translate }} } @else { {{ r.name }} }
+            </p>
+            @if (r.isSystem) {
+              <span class="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{{ 'roles.system' | translate }}</span>
+            }
+          </div>
+          @if (r.description) { <p class="mt-1 line-clamp-2 text-sm text-slate-600">{{ r.description }}</p> }
+          <p class="mt-2 text-xs text-slate-600">
+            {{ 'roles.permissionCount' | translate: { count: r.permissions.length } }} ·
+            {{ 'roles.memberCount' | translate: { count: r.memberCount } }}
+            @if (r.invitationCount) { · {{ 'roles.invitationCount' | translate: { count: r.invitationCount } }} }
+            @if (r.assignedToMe) { · <span class="font-medium text-indigo-700">{{ 'roles.yourRole' | translate }}</span> }
+          </p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              (click)="open(r)"
+              [attr.aria-label]="((roleLock(r) ? 'roles.view' : 'common.edit') | translate) + ': ' + displayName(r)"
+              class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            >
+              {{ (roleLock(r) ? 'roles.view' : 'common.edit') | translate }}
+            </button>
+            @if (!r.isSystem) {
+              <button
+                type="button"
+                (click)="remove(r)"
+                [disabled]="busyId() === r.id || inUse(r) || roleLock(r) !== null"
+                [attr.aria-label]="('common.delete' | translate) + ': ' + displayName(r)"
+                [attr.aria-describedby]="inUse(r) ? 'role-in-use-' + r.id : null"
+                class="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >{{ 'common.delete' | translate }}</button>
+            }
+          </div>
+          @if (!r.isSystem && roleLock(r); as reason) {
+            <p class="mt-2 text-xs text-slate-600">{{ reason | translate }}</p>
+          } @else if (!r.isSystem && inUse(r)) {
+            <p [id]="'role-in-use-' + r.id" class="mt-2 text-xs text-slate-600">{{ 'roles.inUseHint' | translate }}</p>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>
+
+<app-modal
+  [open]="editorOpen()"
+  [title]="(editing() ? (lock() ? 'roles.viewTitle' : 'roles.editTitle') : 'roles.newTitle') | translate"
+  (close)="editorOpen.set(false)"
+>
+  <form [formGroup]="form" (ngSubmit)="save()">
+    @if (lock(); as reason) {
+      <p class="mb-3 rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700" role="note">{{ reason | translate }}</p>
+    }
+    @if (editorError()) {
+      <div class="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ editorError() }}</div>
+    }
+    @if (editing()?.isSystem) {
+      <p class="text-sm font-medium text-slate-900">{{ ('systemRole.' + editing()?.code) | translate }}</p>
+    } @else {
+      <label for="role-name" class="block text-sm font-medium text-slate-700">
+        {{ 'roles.name' | translate }}
+        <input id="role-name" name="name" formControlName="name" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-50" />
+      </label>
+      <label for="role-description" class="mt-3 block text-sm font-medium text-slate-700">
+        {{ 'roles.description' | translate }}
+        <textarea id="role-description" name="description" formControlName="description" rows="2" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-50"></textarea>
+      </label>
+    }
+
+    <p id="role-grant-hint" class="mt-4 text-xs text-slate-600">{{ 'roles.grantHint' | translate }}</p>
+    <div class="mt-2 flex flex-col gap-3">
+      @for (g of groups; track g.key) {
+        <fieldset class="rounded-lg border border-slate-200 px-3 pb-3 pt-1">
+          <legend class="px-1 text-sm font-medium text-slate-800">{{ ('permissionGroup.' + g.key) | translate }}</legend>
+          <div class="flex flex-wrap gap-x-4 gap-y-2">
+            @for (p of g.permissions; track p.code) {
+              <label [for]="'perm-' + p.code" class="inline-flex min-h-11 items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  [id]="'perm-' + p.code"
+                  name="permissions"
+                  [value]="p.code"
+                  [checked]="selected().has(p.code)"
+                  [disabled]="lock() !== null || !canGrant(p.code)"
+                  [attr.aria-describedby]="!canGrant(p.code) ? 'role-grant-hint' : null"
+                  (change)="toggle(p.code, $any($event.target).checked)"
+                  class="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                />
+                {{ ('permissionAction.' + p.action) | translate }}
+              </label>
+            }
+          </div>
+        </fieldset>
+      }
+    </div>
+
+    <div class="mt-5 flex gap-2">
+      @if (!lock()) {
+        <button type="submit" [disabled]="saving()" class="flex-1 rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60">
+          {{ saving() ? ('common.saving' | translate) : ('common.save' | translate) }}
+        </button>
+      }
+      <button type="button" (click)="editorOpen.set(false)" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-700" [class.flex-1]="!!lock()">
+        {{ (lock() ? 'common.close' : 'common.cancel') | translate }}
+      </button>
+    </div>
+  </form>
+</app-modal>

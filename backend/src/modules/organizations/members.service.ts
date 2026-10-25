@@ -32,7 +32,10 @@ import {
   newInvitationToken,
 } from './invitation-token.js';
 import { memberChangeDenial, roleAssignmentDenial } from './member-policy.js';
-import { isUniqueViolation } from '../../common/db-errors.js';
+import {
+  isForeignKeyViolation,
+  isUniqueViolation,
+} from '../../common/db-errors.js';
 import {
   CreateInvitationDto,
   UpdateMemberDto,
@@ -120,6 +123,11 @@ export class MembersService {
       })
       .catch((error: unknown) => {
         // A concurrent invitation for the same email won the partial unique index.
+        if (isForeignKeyViolation(error)) {
+          throw new ConflictException(
+            'The role was just deleted; pick another one',
+          );
+        }
         if (isUniqueViolation(error)) {
           throw new ConflictException(
             'An invitation for this email is being created right now; try again',
@@ -178,28 +186,37 @@ export class MembersService {
         ? await this.assignableRole(organizationId, actorId, dto.roleId)
         : null;
 
-    await this.dataSource.transaction(async (manager) => {
-      if (role) {
-        await this.roles.setUserRole(
-          manager,
-          organizationId,
-          member.userId,
-          role.id,
-        );
-      }
-      if (dto.status !== undefined && dto.status !== member.status) {
-        member.status = dto.status;
-        await manager.getRepository(OrganizationMemberEntity).save(member);
-        if (dto.status === OrganizationMemberStatus.Suspended) {
-          await this.revokeSessions(manager, organizationId, member.userId);
-          await this.revokeInvitationsBy(
+    await this.dataSource
+      .transaction(async (manager) => {
+        if (role) {
+          await this.roles.setUserRole(
             manager,
             organizationId,
             member.userId,
+            role.id,
           );
         }
-      }
-    });
+        if (dto.status !== undefined && dto.status !== member.status) {
+          member.status = dto.status;
+          await manager.getRepository(OrganizationMemberEntity).save(member);
+          if (dto.status === OrganizationMemberStatus.Suspended) {
+            await this.revokeSessions(manager, organizationId, member.userId);
+            await this.revokeInvitationsBy(
+              manager,
+              organizationId,
+              member.userId,
+            );
+          }
+        }
+      })
+      .catch((error: unknown) => {
+        if (isForeignKeyViolation(error)) {
+          throw new ConflictException(
+            'The role was just deleted; pick another one',
+          );
+        }
+        throw error;
+      });
     await this.roles.invalidateUserPermissions(organizationId, member.userId);
 
     const [updated] = await this.toMemberDtos(organizationId, [member]);

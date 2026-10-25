@@ -7,12 +7,13 @@
       cdkTrapFocus
       role="dialog"
       aria-modal="true"
+      [attr.aria-labelledby]="titleId"
       class="max-h-[92dvh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:max-w-lg sm:rounded-2xl"
       (click)="$event.stopPropagation()"
       (keydown.escape)="close.emit()"
     >
       <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-slate-900">{{ title() }}</h2>
+        <h2 [id]="titleId" class="text-lg font-semibold text-slate-900">{{ title() }}</h2>
         <button
           type="button"
           (click)="close.emit()"
