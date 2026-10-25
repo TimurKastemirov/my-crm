@@ -8,10 +8,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import {
+  OrganizationMemberStatus,
   redisKeys,
   SystemRole,
   type Permission,
   type RoleDto,
+  type RoleRef,
 } from '@crm/shared';
 import { RedisService } from '../../config/redis/redis.service.js';
 import { PermissionEntity } from './entities/permission.entity.js';
@@ -80,7 +82,10 @@ export class RolesService {
     }
   }
 
-  /** Aggregated permission codes of a user in an organization (cached in Redis). */
+  /**
+   * Aggregated permission codes of a user in an organization (cached in Redis).
+   * Only an ACTIVE membership grants permissions: a suspended or removed member gets none.
+   */
   async getUserPermissionCodes(
     userId: string,
     organizationId: string,
@@ -98,14 +103,121 @@ export class RolesService {
     const rows: Array<{ code: string }> = await this.dataSource.query(
       `SELECT DISTINCT p.code
          FROM user_roles ur
+         JOIN organization_members om
+           ON om.user_id = ur.user_id
+          AND om.organization_id = ur.organization_id
+          AND om.status = $3
          JOIN role_permissions rp ON rp.role_id = ur.role_id
          JOIN permissions p ON p.id = rp.permission_id
         WHERE ur.user_id = $1 AND ur.organization_id = $2`,
-      [userId, organizationId],
+      [userId, organizationId, OrganizationMemberStatus.Active],
     );
     const codes = rows.map((r) => r.code);
-    await this.redis.set(key, JSON.stringify(codes), PERMISSION_CACHE_TTL_SECONDS);
+    await this.redis.set(
+      key,
+      JSON.stringify(codes),
+      PERMISSION_CACHE_TTL_SECONDS,
+    );
     return codes;
+  }
+
+  /** Drops the cached permissions so a role/status change takes effect on the next request. */
+  async invalidateUserPermissions(
+    organizationId: string,
+    userId: string,
+  ): Promise<void> {
+    await this.redis.del(redisKeys.userPermissions(organizationId, userId));
+  }
+
+  /** Replaces the user's role in the organization (a member has exactly one role). */
+  async setUserRole(
+    manager: EntityManager,
+    organizationId: string,
+    userId: string,
+    roleId: string,
+  ): Promise<void> {
+    const repo = manager.getRepository(UserRoleEntity);
+    await repo.delete({ organizationId, userId });
+    await repo.insert({ organizationId, userId, roleId });
+  }
+
+  /** A role of the organization with its permission codes, or null if it doesn't exist there. */
+  async findRole(
+    organizationId: string,
+    roleId: string,
+  ): Promise<RoleDto | null> {
+    const role = await this.roleRepo.findOne({
+      where: { id: roleId, organizationId },
+    });
+    if (!role) {
+      return null;
+    }
+    return this.toRoleDto(role, await this.permissionCodesForRole(role.id));
+  }
+
+  /** userId → role for the given users of the organization (first role if several). */
+  async rolesByUser(
+    organizationId: string,
+    userIds: string[],
+  ): Promise<Map<string, RoleRef>> {
+    const result = new Map<string, RoleRef>();
+    if (userIds.length === 0) {
+      return result;
+    }
+    const rows: Array<{
+      user_id: string;
+      id: string;
+      name: string;
+      code: string;
+      is_system: boolean;
+    }> = await this.dataSource.query(
+      `SELECT ur.user_id, r.id, r.name, r.code, r.is_system
+         FROM user_roles ur
+         JOIN roles r ON r.id = ur.role_id
+        WHERE ur.organization_id = $1 AND ur.user_id = ANY($2)
+        ORDER BY r.is_system DESC, r.name ASC`,
+      [organizationId, userIds],
+    );
+    for (const row of rows) {
+      if (!result.has(row.user_id)) {
+        result.set(row.user_id, {
+          id: row.id,
+          name: row.name,
+          code: row.code,
+          isSystem: row.is_system,
+        });
+      }
+    }
+    return result;
+  }
+
+  /** Whether the user holds the system owner role in the organization. */
+  /** Permission codes of the user's roles in the organization, regardless of membership status. */
+  async rolePermissionCodes(
+    organizationId: string,
+    userId: string,
+  ): Promise<string[]> {
+    const rows: Array<{ code: string }> = await this.dataSource.query(
+      `SELECT DISTINCT p.code
+         FROM user_roles ur
+         JOIN role_permissions rp ON rp.role_id = ur.role_id
+         JOIN permissions p ON p.id = rp.permission_id
+        WHERE ur.organization_id = $1 AND ur.user_id = $2`,
+      [organizationId, userId],
+    );
+    return rows.map((r) => r.code);
+  }
+
+  async isOwner(organizationId: string, userId: string): Promise<boolean> {
+    const rows: unknown[] = await this.dataSource.query(
+      `SELECT 1 FROM user_roles ur
+         JOIN roles r ON r.id = ur.role_id
+        WHERE ur.organization_id = $1 AND ur.user_id = $2
+          AND r.is_system = true AND r.code = $3
+        LIMIT 1`,
+      [organizationId, userId, SystemRole.Owner],
+    );
+    return rows.length > 0;
   }
 
   async listRoles(organizationId: string): Promise<RoleDto[]> {
@@ -133,13 +245,18 @@ export class RolesService {
     return roles.map((r) => this.toRoleDto(r, byRole.get(r.id) ?? []));
   }
 
-  async createRole(organizationId: string, dto: CreateRoleDto): Promise<RoleDto> {
+  async createRole(
+    organizationId: string,
+    dto: CreateRoleDto,
+  ): Promise<RoleDto> {
     const permissions = await this.resolvePermissions(dto.permissions);
     const exists = await this.roleRepo.findOne({
       where: { organizationId, code: dto.code },
     });
     if (exists) {
-      throw new ConflictException(`A role with the code "${dto.code}" already exists`);
+      throw new ConflictException(
+        `A role with the code "${dto.code}" already exists`,
+      );
     }
     const role = await this.roleRepo.save(
       this.roleRepo.create({
@@ -155,7 +272,10 @@ export class RolesService {
         permissions.map((p) => ({ roleId: role.id, permissionId: p.id })),
       );
     }
-    return this.toRoleDto(role, permissions.map((p) => p.code));
+    return this.toRoleDto(
+      role,
+      permissions.map((p) => p.code),
+    );
   }
 
   async updateRole(
@@ -205,7 +325,9 @@ export class RolesService {
 
   // ---------- helpers ----------
 
-  private async resolvePermissions(codes: string[]): Promise<PermissionEntity[]> {
+  private async resolvePermissions(
+    codes: string[],
+  ): Promise<PermissionEntity[]> {
     const unique = [...new Set(codes)];
     if (unique.length === 0) {
       return [];
@@ -216,7 +338,9 @@ export class RolesService {
     if (permissions.length !== unique.length) {
       const found = new Set(permissions.map((p) => p.code));
       const unknown = unique.filter((c) => !found.has(c));
-      throw new BadRequestException(`Unknown permission codes: ${unknown.join(', ')}`);
+      throw new BadRequestException(
+        `Unknown permission codes: ${unknown.join(', ')}`,
+      );
     }
     return permissions;
   }

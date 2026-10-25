@@ -2,8 +2,11 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import type {
+  AcceptInvitationRequest,
   AuthResult,
+  InvitationPreview,
   LoginRequest,
+  Permission,
   RegisterRequest,
   SessionInfo,
   UserDto,
@@ -19,6 +22,8 @@ export class AuthService {
 
   readonly user = signal<UserDto | null>(null);
   readonly organizationId = signal<string | null>(null);
+  /** Permission codes in the active organization — for hiding UI only; the server enforces them. */
+  readonly permissions = signal<readonly Permission[]>([]);
   readonly isAuthenticated = computed(() => this.user() !== null);
 
   private sessionLoad: Promise<boolean> | null = null;
@@ -37,6 +42,24 @@ export class AuthService {
     await this.router.navigate(['/']);
   }
 
+  /** Public: what an invitation link grants, shown before accepting. */
+  previewInvitation(token: string): Promise<InvitationPreview> {
+    return firstValueFrom(this.api.post<InvitationPreview>('/auth/invitations/preview', { token }));
+  }
+
+  /** Accepts an invitation and signs in to the inviting organization (replaces any current session). */
+  async acceptInvitation(payload: AcceptInvitationRequest): Promise<void> {
+    const result = await firstValueFrom(this.api.post<AuthResult>('/auth/invitations/accept', payload));
+    this.applyTokens(result);
+    await this.loadSession(true);
+    await this.router.navigate(['/']);
+  }
+
+  /** Whether the current user has the permission in the active organization. */
+  can(permission: Permission): boolean {
+    return this.permissions().includes(permission);
+  }
+
   async logout(): Promise<void> {
     const refreshToken = this.tokens.refresh;
     if (refreshToken) {
@@ -49,6 +72,7 @@ export class AuthService {
     this.tokens.clear();
     this.user.set(null);
     this.organizationId.set(null);
+    this.permissions.set([]);
     await this.router.navigate(['/login']);
   }
 
@@ -62,6 +86,7 @@ export class AuthService {
     this.tokens.clear();
     this.user.set(null);
     this.organizationId.set(null);
+    this.permissions.set([]);
     void this.router.navigate(['/login']);
   }
 
@@ -79,11 +104,13 @@ export class AuthService {
       const session = await firstValueFrom(this.api.get<SessionInfo>('/auth/me'));
       this.user.set(session.user);
       this.organizationId.set(session.organizationId);
+      this.permissions.set(session.permissions);
       return true;
     } catch {
       this.tokens.clear();
       this.user.set(null);
       this.organizationId.set(null);
+      this.permissions.set([]);
       return false;
     } finally {
       this.sessionLoad = null;

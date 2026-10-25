@@ -35,7 +35,8 @@
     "companies": "Companies",
     "leads": "Leads",
     "deals": "Deals",
-    "tasks": "Tasks"
+    "tasks": "Tasks",
+    "team": "Team"
   },
   "a11y": {
     "openMenu": "Open menu",
@@ -203,5 +204,58 @@
     "low": "Low",
     "normal": "Normal",
     "high": "High"
+  },
+  "team": {
+    "title": "Team",
+    "invite": "+ Invite",
+    "organization": "Organization",
+    "organizationName": "Organization name",
+    "renamed": "Organization name saved",
+    "members": "Members",
+    "you": "you",
+    "role": "Role",
+    "noRole": "No role",
+    "suspend": "Suspend",
+    "activate": "Reactivate",
+    "remove": "Remove",
+    "pendingInvitations": "Pending invitations",
+    "noInvitations": "No pending invitations",
+    "expires": "expires",
+    "revoke": "Revoke",
+    "inviteTitle": "Invite a member",
+    "inviteHint": "You will get a one-time link to share with the person. It is valid for 7 days.",
+    "createInvite": "Create invitation link",
+    "inviteCreated": "Invitation created. Share this link — it is shown only once and expires on {{date}}.",
+    "inviteLink": "Invitation link",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "done": "Done",
+    "suspendConfirm": "Suspend {{name}}? They will lose access immediately.",
+    "activateConfirm": "Reactivate {{name}}?",
+    "removeConfirm": "Remove {{name}} from the organization? They will lose access immediately.",
+    "revokeConfirm": "Revoke the invitation for {{email}}?",
+    "loadError": "Failed to load the team",
+    "saveError": "Failed to save",
+    "removeError": "Failed to remove the member",
+    "revokeError": "Failed to revoke the invitation",
+    "inviteError": "Failed to create the invitation"
+  },
+  "memberStatus": {
+    "active": "Active",
+    "suspended": "Suspended",
+    "invited": "Invited"
+  },
+  "invite": {
+    "title": "Invitation",
+    "joinTitle": "Join {{organization}}",
+    "subtitle": "You are invited as {{role}} with the email {{email}}.",
+    "existingAccount": "This email already has an account. Enter its password to join.",
+    "newPassword": "Create a password",
+    "join": "Join",
+    "joining": "Joining…",
+    "missingToken": "The invitation link is incomplete.",
+    "invalid": "The invitation is invalid or has expired.",
+    "askAgain": "Ask the person who invited you for a new link.",
+    "failed": "Failed to accept the invitation"
   }
 }

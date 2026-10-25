@@ -92,9 +92,22 @@ npm run dev:frontend    # Angular → http://localhost:4200
 | `npm run lint` | Lint (oxlint) the backend |
 | `npm test` | Backend + frontend tests (vitest) |
 | `npm run test:backend` / `test:frontend` | Run tests separately |
+| `NODE_ENV=test POSTGRES_DB=… npm run test:e2e -w backend` | Backend e2e against a real PostgreSQL + Redis (see below) |
 | `npm run migration:generate -w backend -- src/migrations/<Name>` | Generate a migration from entity changes |
 | `npm run migration:run -w backend` | Apply migrations (dev, via tsx) |
 | `npm run up` / `npm run down` | Docker Compose up/down |
+
+### Backend e2e tests
+
+The DB-backed e2e suites (`backend/test/*.e2e-spec.ts`) run the whole API against a real PostgreSQL and Redis and
+apply migrations themselves. To avoid touching your dev database by accident, they run only when `NODE_ENV=test` and
+`POSTGRES_DB` are set in the process environment (otherwise they are skipped). Point them at a throwaway database:
+
+```bash
+NODE_ENV=test POSTGRES_HOST=localhost POSTGRES_PORT=5432 POSTGRES_DB=crm_test \
+POSTGRES_USER=admin POSTGRES_PASSWORD=123456 REDIS_HOST=localhost REDIS_PORT=6379 \
+npm run test:e2e -w backend
+```
 
 ## Environment variables
 

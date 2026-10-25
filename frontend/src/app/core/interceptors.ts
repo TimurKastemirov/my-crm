@@ -18,10 +18,12 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
+      // Public auth calls answer 401 for bad credentials — that's a form error, not an expired session.
       const isAuthCall =
         req.url.includes('/auth/login') ||
         req.url.includes('/auth/register') ||
-        req.url.includes('/auth/refresh');
+        req.url.includes('/auth/refresh') ||
+        req.url.includes('/auth/invitations/');
       if (error.status === 401 && !isAuthCall) {
         auth.handleUnauthorized();
       }

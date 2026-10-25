@@ -1,0 +1,206 @@
+<div class="flex h-full flex-col">
+  <div class="flex items-center justify-between gap-3">
+    <h1 class="text-xl font-semibold text-slate-900">{{ 'team.title' | translate }}</h1>
+    <button
+      type="button"
+      (click)="openInvite()"
+      [disabled]="loading() || roles().length === 0"
+      class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
+    >
+      {{ 'team.invite' | translate }}
+    </button>
+  </div>
+
+  @if (error()) {
+    <div class="mt-4 shrink-0 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ error() }}</div>
+  }
+
+  @if (loading() && !organization()) {
+    <p class="mt-4 flex min-h-0 flex-1 items-center justify-center text-sm text-slate-500">{{ 'common.loading' | translate }}</p>
+  } @else if (organization(); as org) {
+    <div class="mt-4 flex min-h-0 flex-1 flex-col gap-6 overflow-auto">
+      <section aria-labelledby="team-org-heading" class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+        <h2 id="team-org-heading" class="text-sm font-semibold text-slate-900">{{ 'team.organization' | translate }}</h2>
+        @if (canRename) {
+          <form [formGroup]="orgForm" (ngSubmit)="rename()" class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
+            <label for="team-org-name" class="block flex-1 text-sm font-medium text-slate-700">
+              {{ 'team.organizationName' | translate }}
+              <input
+                id="team-org-name"
+                name="name"
+                formControlName="name"
+                autocomplete="organization"
+                class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              />
+            </label>
+            <button
+              type="submit"
+              [disabled]="renaming()"
+              class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+            >
+              {{ renaming() ? ('common.saving' | translate) : ('common.save' | translate) }}
+            </button>
+          </form>
+          @if (renamed()) {
+            <p class="mt-2 text-sm text-emerald-700" role="status">{{ 'team.renamed' | translate }}</p>
+          }
+        } @else {
+          <p class="mt-2 text-sm text-slate-700">{{ org.name }}</p>
+        }
+      </section>
+
+      <section aria-labelledby="team-members-heading">
+        <h2 id="team-members-heading" class="text-sm font-semibold text-slate-900">
+          {{ 'team.members' | translate }} <span class="font-normal text-slate-500">({{ members().length }})</span>
+        </h2>
+        <ul class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          @for (m of members(); track m.id) {
+            <li class="flex flex-col rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="truncate font-medium text-slate-900">
+                    {{ displayName(m) }}
+                    @if (isMe(m)) { <span class="ml-1 text-xs font-normal text-slate-500">({{ 'team.you' | translate }})</span> }
+                  </p>
+                  <p class="truncate text-sm text-slate-500">{{ m.email }}</p>
+                </div>
+                <span
+                  class="shrink-0 rounded-full px-2 py-0.5 text-xs"
+                  [class.bg-amber-100]="isSuspended(m)"
+                  [class.text-amber-800]="isSuspended(m)"
+                  [class.bg-emerald-100]="!isSuspended(m)"
+                  [class.text-emerald-800]="!isSuspended(m)"
+                >{{ ('memberStatus.' + m.status) | translate }}</span>
+              </div>
+
+              @if (canManage(m)) {
+                <label [for]="'member-role-' + m.id" class="mt-3 block text-xs font-medium text-slate-600">
+                  {{ 'team.role' | translate }}
+                  <select
+                    [id]="'member-role-' + m.id"
+                    name="memberRole"
+                    [disabled]="busyId() === m.id"
+                    (change)="changeRole(m, $any($event.target).value)"
+                    class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm text-slate-800 outline-none focus:border-indigo-500"
+                  >
+                    @if (!m.role) {
+                      <option value="" selected>{{ 'team.noRole' | translate }}</option>
+                    }
+                    @for (r of roles(); track r.id) {
+                      <option [value]="r.id" [selected]="r.id === m.role?.id">{{ r.name }}</option>
+                    }
+                  </select>
+                </label>
+                <div class="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    [disabled]="busyId() === m.id"
+                    (click)="toggleSuspended(m)"
+                    class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                  >{{ (isSuspended(m) ? 'team.activate' : 'team.suspend') | translate }}</button>
+                  <button
+                    type="button"
+                    [disabled]="busyId() === m.id"
+                    (click)="remove(m)"
+                    class="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-700 hover:bg-red-50 disabled:opacity-60"
+                  >{{ 'team.remove' | translate }}</button>
+                </div>
+              } @else {
+                <p class="mt-3 text-sm text-slate-600">{{ 'team.role' | translate }}: {{ m.role?.name ?? ('team.noRole' | translate) }}</p>
+              }
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section aria-labelledby="team-invitations-heading">
+        <h2 id="team-invitations-heading" class="text-sm font-semibold text-slate-900">{{ 'team.pendingInvitations' | translate }}</h2>
+        @if (invitations().length === 0) {
+          <p class="mt-3 rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
+            {{ 'team.noInvitations' | translate }}
+          </p>
+        } @else {
+          <ul class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            @for (inv of invitations(); track inv.id) {
+              <li class="flex items-center justify-between gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-medium text-slate-900">{{ inv.email }}</p>
+                  <p class="text-xs text-slate-500">
+                    {{ inv.role.name }} · {{ 'team.expires' | translate }} {{ inv.expiresAt | date: 'dd.MM.yyyy' }}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  [disabled]="busyId() === inv.id"
+                  (click)="revoke(inv)"
+                  [attr.aria-label]="('team.revoke' | translate) + ': ' + inv.email"
+                  class="shrink-0 rounded-lg border border-red-200 px-3 py-2 text-sm text-red-700 hover:bg-red-50 disabled:opacity-60"
+                >{{ 'team.revoke' | translate }}</button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+  }
+</div>
+
+<app-modal [open]="inviteOpen()" [title]="'team.inviteTitle' | translate" (close)="inviteOpen.set(false)">
+  @if (inviteLink(); as link) {
+    <p class="text-sm text-slate-700" role="status">{{ 'team.inviteCreated' | translate: { date: (inviteExpiresAt() | date: 'dd.MM.yyyy') } }}</p>
+    <label for="team-invite-link" class="mt-3 block text-sm font-medium text-slate-700">
+      {{ 'team.inviteLink' | translate }}
+      <input
+        id="team-invite-link"
+        name="inviteLink"
+        readonly
+        [value]="link"
+        (focus)="$any($event.target).select()"
+        class="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 font-mono text-xs text-slate-800 outline-none focus:border-indigo-500"
+      />
+    </label>
+    <div class="mt-5 flex gap-2">
+      <button type="button" (click)="copyLink()" class="flex-1 rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white hover:bg-indigo-500">
+        {{ (copied() ? 'team.copied' : 'team.copyLink') | translate }}
+      </button>
+      <button type="button" (click)="inviteOpen.set(false)" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-700">{{ 'team.done' | translate }}</button>
+    </div>
+  } @else {
+    <form [formGroup]="inviteForm" (ngSubmit)="sendInvite()">
+      @if (inviteError()) {
+        <div class="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ inviteError() }}</div>
+      }
+      <label for="team-invite-email" class="block text-sm font-medium text-slate-700">
+        {{ 'auth.email' | translate }}
+        <input
+          id="team-invite-email"
+          name="email"
+          type="email"
+          formControlName="email"
+          autocomplete="off"
+          class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+        />
+      </label>
+      <label for="team-invite-role" class="mt-3 block text-sm font-medium text-slate-700">
+        {{ 'team.role' | translate }}
+        <select
+          id="team-invite-role"
+          name="roleId"
+          formControlName="roleId"
+          class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500"
+        >
+          @for (r of roles(); track r.id) {
+            <option [value]="r.id">{{ r.name }}</option>
+          }
+        </select>
+      </label>
+      <p class="mt-3 text-xs text-slate-500">{{ 'team.inviteHint' | translate }}</p>
+      <div class="mt-5 flex gap-2">
+        <button type="submit" [disabled]="inviting()" class="flex-1 rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60">
+          {{ inviting() ? ('common.creating' | translate) : ('team.createInvite' | translate) }}
+        </button>
+        <button type="button" (click)="inviteOpen.set(false)" class="rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-700">{{ 'common.cancel' | translate }}</button>
+      </div>
+    </form>
+  }
+</app-modal>

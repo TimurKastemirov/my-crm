@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
@@ -11,15 +12,26 @@ import { hash as argonHash, verify as argonVerify } from '@node-rs/argon2';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import {
   OrganizationMemberStatus,
+  PERMISSIONS,
   type AuthResult,
   type AuthTokens,
+  type InvitationPreview,
   type JwtPayload,
+  type Permission,
   type SessionInfo,
   type UserDto,
 } from '@crm/shared';
 import { UserEntity } from '../users/entities/user.entity.js';
 import { OrganizationEntity } from '../organizations/entities/organization.entity.js';
 import { OrganizationMemberEntity } from '../organizations/entities/organization-member.entity.js';
+import { OrganizationInvitationEntity } from '../organizations/entities/organization-invitation.entity.js';
+import {
+  hashInvitationToken,
+  isInvitationPending,
+} from '../organizations/invitation-token.js';
+import { RoleEntity } from '../rbac/entities/role.entity.js';
+import { roleAssignmentDenial } from '../organizations/member-policy.js';
+import { isUniqueViolation } from '../../common/db-errors.js';
 import { RefreshTokenEntity } from './entities/refresh-token.entity.js';
 import { UsersService } from '../users/users.service.js';
 import { OrganizationsService } from '../organizations/organizations.service.js';
@@ -28,6 +40,7 @@ import { PipelinesService } from '../deals/pipelines.service.js';
 import { parseDurationToMs } from './auth.util.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
+import { AcceptInvitationDto } from './dto/accept-invitation.dto.js';
 
 interface RequestMeta {
   userAgent?: string | null;
@@ -146,6 +159,9 @@ export class AuthService {
     if (!user || !user.isActive) {
       throw new UnauthorizedException('User is unavailable');
     }
+    if (!(await this.isActiveMember(user.id, record.organizationId))) {
+      throw new UnauthorizedException('Organization membership is not active');
+    }
 
     // Rotation: revoke the current token and issue a new one in the same family.
     record.revokedAt = new Date();
@@ -175,7 +191,123 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
-    return { user: this.toUserDto(user), organizationId: payload.organizationId };
+    const permissions = await this.rolesService.getUserPermissionCodes(
+      user.id,
+      payload.organizationId,
+    );
+    return {
+      user: this.toUserDto(user),
+      organizationId: payload.organizationId,
+      permissions: permissions as Permission[],
+    };
+  }
+
+  /** What the invitee sees before accepting (the token itself is the credential). */
+  async previewInvitation(rawToken: string): Promise<InvitationPreview> {
+    const invitation = await this.pendingInvitation(rawToken);
+    const [org, role, user] = await Promise.all([
+      this.dataSource
+        .getRepository(OrganizationEntity)
+        .findOneOrFail({ where: { id: invitation.organizationId } }),
+      this.dataSource
+        .getRepository(RoleEntity)
+        .findOneOrFail({ where: { id: invitation.roleId } }),
+      this.usersService.findByEmail(invitation.email),
+    ]);
+    return {
+      organizationName: org.name,
+      email: invitation.email,
+      roleName: role.name,
+      userExists: Boolean(user),
+      expiresAt: invitation.expiresAt.toISOString(),
+    };
+  }
+
+  /**
+   * Accepts an invitation: creates the account (or verifies the existing account's password),
+   * adds the membership with the invited role and signs in to the inviting organization.
+   */
+  async acceptInvitation(dto: AcceptInvitationDto, meta: RequestMeta): Promise<AuthResult> {
+    const invitation = await this.pendingInvitation(dto.token);
+
+    const existing = await this.usersService.findByEmail(invitation.email);
+    let passwordHash: string | null = null;
+    if (existing) {
+      const passwordOk =
+        existing.isActive && (await argonVerify(existing.passwordHash, dto.password));
+      if (!passwordOk) {
+        throw new UnauthorizedException('Invalid password');
+      }
+    } else {
+      if (!dto.firstName?.trim() || !dto.lastName?.trim()) {
+        throw new BadRequestException('firstName and lastName are required for a new account');
+      }
+      passwordHash = await argonHash(dto.password);
+    }
+
+    const user = await this.dataSource.transaction(async (manager) => {
+      // Claim the invitation atomically: a concurrent accept of the same token updates 0 rows.
+      const claimed = await manager
+        .createQueryBuilder()
+        .update(OrganizationInvitationEntity)
+        .set({ acceptedAt: () => 'now()' })
+        .where(
+          'id = :id AND accepted_at IS NULL AND revoked_at IS NULL AND expires_at > now()',
+          { id: invitation.id },
+        )
+        .execute();
+      if (!claimed.affected) {
+        throw new BadRequestException('The invitation is invalid or has expired');
+      }
+
+      const userRepo = manager.getRepository(UserEntity);
+      const member =
+        existing ??
+        (await userRepo.save(
+          userRepo.create({
+            email: invitation.email,
+            passwordHash: passwordHash as string,
+            firstName: (dto.firstName as string).trim(),
+            lastName: (dto.lastName as string).trim(),
+          }),
+        ));
+
+      const memberRepo = manager.getRepository(OrganizationMemberEntity);
+      if (
+        await memberRepo.exists({
+          where: { organizationId: invitation.organizationId, userId: member.id },
+        })
+      ) {
+        throw new ConflictException('You are already a member of this organization');
+      }
+      await memberRepo.save(
+        memberRepo.create({
+          organizationId: invitation.organizationId,
+          userId: member.id,
+          status: OrganizationMemberStatus.Active,
+          invitedById: invitation.invitedById,
+          joinedAt: new Date(),
+        }),
+      );
+      await this.rolesService.setUserRole(
+        manager,
+        invitation.organizationId,
+        member.id,
+        invitation.roleId,
+      );
+      return member;
+    }).catch((error: unknown) => {
+      // A concurrent registration/accept created the same account (unique email) first.
+      if (isUniqueViolation(error)) {
+        throw new ConflictException('An account with this email was just created; try again');
+      }
+      throw error;
+    });
+
+    await this.rolesService.invalidateUserPermissions(invitation.organizationId, user.id);
+    await this.usersService.updateLastLogin(user.id);
+    const tokens = await this.issueTokens(user, invitation.organizationId, randomUUID(), meta);
+    return { user: this.toUserDto(user), tokens };
   }
 
   // ---------- helpers ----------
@@ -214,6 +346,47 @@ export class AuthService {
 
   private hashToken(raw: string): string {
     return createHash('sha256').update(raw).digest('hex');
+  }
+
+  private async pendingInvitation(rawToken: string): Promise<OrganizationInvitationEntity> {
+    const invitation = await this.dataSource
+      .getRepository(OrganizationInvitationEntity)
+      .findOne({ where: { tokenHash: hashInvitationToken(rawToken) } });
+    if (!invitation || !isInvitationPending(invitation, new Date())) {
+      throw new BadRequestException('The invitation is invalid or has expired');
+    }
+    await this.assertInviterCanStillGrant(invitation);
+    return invitation;
+  }
+
+  /**
+   * The link carries the inviter's authority: it stays valid only while the inviter is an active
+   * member who may still manage members and grant this role (e.g. not demoted since).
+   */
+  private async assertInviterCanStillGrant(
+    invitation: OrganizationInvitationEntity,
+  ): Promise<void> {
+    const { organizationId, invitedById, roleId } = invitation;
+    const role = await this.rolesService.findRole(organizationId, roleId);
+    let allowed = false;
+    if (invitedById && role) {
+      const [permissions, isOwner] = await Promise.all([
+        this.rolesService.getUserPermissionCodes(invitedById, organizationId),
+        this.rolesService.isOwner(organizationId, invitedById),
+      ]);
+      allowed =
+        permissions.includes(PERMISSIONS.MEMBERS_MANAGE) &&
+        roleAssignmentDenial(permissions, isOwner, role) === null;
+    }
+    if (!allowed) {
+      throw new BadRequestException('The invitation is no longer valid');
+    }
+  }
+
+  private isActiveMember(userId: string, organizationId: string): Promise<boolean> {
+    return this.dataSource.getRepository(OrganizationMemberEntity).exists({
+      where: { userId, organizationId, status: OrganizationMemberStatus.Active },
+    });
   }
 
   private async primaryOrganizationId(userId: string): Promise<string | null> {

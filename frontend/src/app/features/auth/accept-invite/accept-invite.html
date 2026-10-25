@@ -1,0 +1,58 @@
+<div class="min-h-dvh flex items-center justify-center bg-slate-50 px-4 py-8">
+  <div class="w-full max-w-sm rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+    @if (loading()) {
+      <p class="text-center text-sm text-slate-500">{{ 'common.loading' | translate }}</p>
+    } @else if (invalid(); as reason) {
+      <h1 class="text-2xl font-semibold text-slate-900">{{ 'invite.title' | translate }}</h1>
+      <div class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ reason }}</div>
+      <p class="mt-4 text-sm text-slate-600">{{ 'invite.askAgain' | translate }}</p>
+      <a routerLink="/login" class="mt-4 inline-block text-sm font-medium text-indigo-700 hover:underline">{{ 'auth.signIn' | translate }}</a>
+    } @else if (preview(); as p) {
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <h1 class="text-2xl font-semibold text-slate-900">{{ 'invite.joinTitle' | translate: { organization: p.organizationName } }}</h1>
+        <p class="mt-1 text-sm text-slate-600">{{ 'invite.subtitle' | translate: { email: p.email, role: p.roleName } }}</p>
+
+        @if (error()) {
+          <div class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ error() }}</div>
+        }
+
+        @if (p.userExists) {
+          <p class="mt-4 text-sm text-slate-600">{{ 'invite.existingAccount' | translate }}</p>
+        } @else {
+          <div class="mt-5 grid grid-cols-2 gap-3">
+            <label for="invite-first-name" class="block text-sm font-medium text-slate-700">
+              {{ 'auth.firstName' | translate }}
+              <input id="invite-first-name" name="firstName" formControlName="firstName" autocomplete="given-name" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+            </label>
+            <label for="invite-last-name" class="block text-sm font-medium text-slate-700">
+              {{ 'auth.lastName' | translate }}
+              <input id="invite-last-name" name="lastName" formControlName="lastName" autocomplete="family-name" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+            </label>
+          </div>
+        }
+
+        <!-- The email is fixed by the invitation; kept as a hidden username for password managers. -->
+        <input type="hidden" id="invite-email" name="username" [value]="p.email" autocomplete="username" />
+        <label for="invite-password" class="mt-4 block text-sm font-medium text-slate-700">
+          {{ (p.userExists ? 'auth.password' : 'invite.newPassword') | translate }}
+          <input
+            id="invite-password"
+            name="password"
+            type="password"
+            formControlName="password"
+            [attr.autocomplete]="p.userExists ? 'current-password' : 'new-password'"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          />
+        </label>
+
+        <button
+          type="submit"
+          [disabled]="submitting()"
+          class="mt-6 w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
+        >
+          {{ submitting() ? ('invite.joining' | translate) : ('invite.join' | translate) }}
+        </button>
+      </form>
+    }
+  </div>
+</div>

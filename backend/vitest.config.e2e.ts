@@ -7,5 +7,8 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['**/*.e2e-spec.ts'],
+    // DB-backed suites share one database: run files sequentially.
+    fileParallelism: false,
+    hookTimeout: 60_000,
   },
 });

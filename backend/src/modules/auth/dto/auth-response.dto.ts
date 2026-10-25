@@ -1,4 +1,11 @@
-import type { AuthResult, AuthTokens, SessionInfo, UserDto } from '@crm/shared';
+import type {
+  AuthResult,
+  AuthTokens,
+  InvitationPreview,
+  Permission,
+  SessionInfo,
+  UserDto,
+} from '@crm/shared';
 
 /**
  * Response DTOs for Swagger documentation. Classes (not interfaces from @crm/shared)
@@ -33,4 +40,15 @@ export class SessionInfoDto implements SessionInfo {
   user: UserResponseDto;
   /** Active organization of the current session. */
   organizationId: string;
+  /** Permission codes of the user in the active organization (for UI gating). */
+  permissions: Permission[];
+}
+
+export class InvitationPreviewDto implements InvitationPreview {
+  organizationName: string;
+  email: string;
+  roleName: string;
+  /** true — the email already has an account: accepting requires its password. */
+  userExists: boolean;
+  expiresAt: string;
 }

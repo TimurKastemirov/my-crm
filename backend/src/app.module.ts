@@ -6,6 +6,7 @@ import { HealthModule } from './modules/health/health.module.js';
 import { ReadinessModule } from './modules/health/readiness.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { RbacModule } from './modules/rbac/rbac.module.js';
+import { OrganizationsModule } from './modules/organizations/organizations.module.js';
 import { CompaniesModule } from './modules/companies/companies.module.js';
 import { ContactsModule } from './modules/contacts/contacts.module.js';
 import { LeadsModule } from './modules/leads/leads.module.js';
@@ -25,6 +26,7 @@ import { validateEnv } from './config/env.validation.js';
     ReadinessModule,
     AuthModule,
     RbacModule,
+    OrganizationsModule,
     CompaniesModule,
     ContactsModule,
     LeadsModule,

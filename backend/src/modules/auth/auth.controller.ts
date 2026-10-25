@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
@@ -21,14 +22,22 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import type { Request } from 'express';
-import type { AuthResult, AuthTokens, JwtPayload, SessionInfo } from '@crm/shared';
+import type {
+  AuthResult,
+  AuthTokens,
+  InvitationPreview,
+  JwtPayload,
+  SessionInfo,
+} from '@crm/shared';
 import { AuthService } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { RefreshDto } from './dto/refresh.dto.js';
+import { AcceptInvitationDto, InvitationTokenDto } from './dto/accept-invitation.dto.js';
 import {
   AuthResultDto,
   AuthTokensDto,
+  InvitationPreviewDto,
   SessionInfoDto,
 } from './dto/auth-response.dto.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
@@ -109,6 +118,37 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: 'A valid access token is required' })
   me(@CurrentUser() user: JwtPayload): Promise<SessionInfo> {
     return this.auth.me(user);
+  }
+
+  @Post('invitations/preview')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @ApiOperation({
+    summary: 'Preview an invitation',
+    description: 'Organization, email and role of a pending invitation (the token is passed in the body to keep it out of URLs/logs).',
+  })
+  @ApiOkResponse({ type: InvitationPreviewDto, description: 'Invitation details' })
+  @ApiBadRequestResponse({ description: 'The invitation is invalid or has expired' })
+  @ApiTooManyRequestsResponse({ description: 'Rate limit exceeded' })
+  previewInvitation(@Body() dto: InvitationTokenDto): Promise<InvitationPreview> {
+    return this.auth.previewInvitation(dto.token);
+  }
+
+  @Post('invitations/accept')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @ApiOperation({
+    summary: 'Accept an invitation',
+    description:
+      'Creates the account (or verifies the password of the existing one), joins the organization with the invited role and returns a token pair for that organization.',
+  })
+  @ApiOkResponse({ type: AuthResultDto, description: 'Joined and signed in' })
+  @ApiBadRequestResponse({ description: 'The invitation is invalid or has expired, or names are missing' })
+  @ApiUnauthorizedResponse({ description: 'Invalid password of the existing account' })
+  @ApiConflictResponse({ description: 'Already a member of the organization' })
+  @ApiTooManyRequestsResponse({ description: 'Rate limit exceeded' })
+  acceptInvitation(@Body() dto: AcceptInvitationDto, @Req() req: Request): Promise<AuthResult> {
+    return this.auth.acceptInvitation(dto, this.meta(req));
   }
 
   private meta(req: Request): { userAgent: string | null; ip: string | null } {

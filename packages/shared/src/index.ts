@@ -229,6 +229,8 @@ export interface AuthResult {
 export interface SessionInfo {
   user: UserDto;
   organizationId: UUID;
+  /** Aggregated permission codes of the user in the active organization (for UI gating only). */
+  permissions: Permission[];
 }
 
 /* ============================ Domain models ============================ */
@@ -265,6 +267,87 @@ export interface RoleDto extends BaseEntity {
   isSystem: boolean;
   description: string | null;
   permissions: Permission[];
+}
+
+/* ============================ Organization & members ============================ */
+
+/** PATCH /organizations/current */
+export interface UpdateOrganizationRequest {
+  name: string;
+}
+
+/** Short role reference embedded in members and invitations. */
+export interface RoleRef {
+  id: UUID;
+  name: string;
+  code: string;
+  isSystem: boolean;
+}
+
+/** A member of the current organization: GET /organizations/members. */
+export interface MemberDto extends BaseEntity {
+  organizationId: UUID;
+  userId: UUID;
+  email: string;
+  firstName: string;
+  lastName: string;
+  status: OrganizationMemberStatus;
+  role: RoleRef | null;
+  joinedAt: ISODateString | null;
+}
+
+/** PATCH /organizations/members/:id — change the role and/or suspend/reactivate. */
+export interface UpdateMemberRequest {
+  roleId?: UUID;
+  status?: Exclude<OrganizationMemberStatus, 'invited'>;
+}
+
+/** A pending invitation: GET /organizations/invitations. */
+export interface InvitationDto {
+  id: UUID;
+  organizationId: UUID;
+  email: string;
+  role: RoleRef;
+  invitedById: UUID | null;
+  expiresAt: ISODateString;
+  createdAt: ISODateString;
+}
+
+/** POST /organizations/members — invite a person by email with a role. */
+export interface CreateInvitationRequest {
+  email: string;
+  roleId: UUID;
+}
+
+/** The raw token is returned only once, at creation time (the server stores only its hash). */
+export interface CreateInvitationResult {
+  invitation: InvitationDto;
+  token: string;
+}
+
+/** POST /auth/invitations/preview — what the invitee sees before accepting. */
+export interface InvitationPreviewRequest {
+  token: string;
+}
+
+export interface InvitationPreview {
+  organizationName: string;
+  email: string;
+  roleName: string;
+  /** true — the email already has an account: accepting requires its password. */
+  userExists: boolean;
+  expiresAt: ISODateString;
+}
+
+/**
+ * POST /auth/invitations/accept. For a new account firstName/lastName are required and
+ * the password becomes the account password; for an existing account it is verified.
+ */
+export interface AcceptInvitationRequest {
+  token: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface CompanyDto extends BaseEntity {
