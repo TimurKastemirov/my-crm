@@ -36,7 +36,8 @@
     "leads": "Leads",
     "deals": "Deals",
     "tasks": "Tasks",
-    "team": "Team"
+    "team": "Team",
+    "profile": "Profile"
   },
   "a11y": {
     "openMenu": "Open menu",
@@ -257,5 +258,27 @@
     "invalid": "The invitation is invalid or has expired.",
     "askAgain": "Ask the person who invited you for a new link.",
     "failed": "Failed to accept the invitation"
+  },
+  "profile": {
+    "title": "Profile",
+    "details": "Personal details",
+    "saved": "Profile saved",
+    "saveError": "Failed to save the profile",
+    "emailReadonly": "The email is your sign-in and cannot be changed.",
+    "preferences": "Preferences",
+    "timeZone": "Dates and times are shown in your browser’s time zone: {{zone}}.",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Repeat the new password",
+    "passwordHint": "At least 8 characters. Other devices will be signed out.",
+    "passwordMismatch": "The new passwords do not match",
+    "passwordChanged": "Password changed. Other devices were signed out.",
+    "passwordError": "Failed to change the password",
+    "sessions": "Sessions",
+    "sessionsHint": "Signs you out on every device, including this one.",
+    "logoutEverywhere": "Sign out of all devices",
+    "logoutEverywhereConfirm": "Sign out of all devices, including this one?",
+    "logoutEverywhereError": "Failed to sign out of all devices"
   }
 }

@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, IsNull, Repository } from 'typeorm';
+import { DataSource, IsNull, Not, Repository } from 'typeorm';
 import { hash as argonHash, verify as argonVerify } from '@node-rs/argon2';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import {
@@ -42,6 +42,7 @@ import { parseDurationToMs } from './auth.util.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { AcceptInvitationDto } from './dto/accept-invitation.dto.js';
+import { ChangePasswordDto } from './dto/change-password.dto.js';
 
 interface RequestMeta {
   userAgent?: string | null;
@@ -178,6 +179,51 @@ export class AuthService {
       { tokenHash: this.hashToken(rawToken), revokedAt: IsNull() },
       { revokedAt: new Date() },
     );
+  }
+
+  /**
+   * Changes the password after verifying the current one, ends every session (all refresh tokens)
+   * and returns a fresh token pair so the current session continues.
+   * A wrong current password is a 400 (not 401): the client must not treat it as an expired session.
+   */
+  async changePassword(
+    payload: JwtPayload,
+    dto: ChangePasswordDto,
+    meta: RequestMeta,
+  ): Promise<AuthTokens> {
+    const user = await this.usersService.findById(payload.sub);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('User is unavailable');
+    }
+    if (!(await argonVerify(user.passwordHash, dto.currentPassword))) {
+      throw new BadRequestException('The current password is incorrect');
+    }
+    if (dto.newPassword === dto.currentPassword) {
+      throw new BadRequestException('The new password must differ from the current one');
+    }
+    // Same rule as refresh: no new session for an organization the user no longer belongs to.
+    if (!(await this.isActiveMember(user.id, payload.organizationId))) {
+      throw new UnauthorizedException('Organization membership is not active');
+    }
+
+    const passwordHash = await argonHash(dto.newPassword);
+    // One transaction: new password, a new session for this device, every other session revoked.
+    return this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(UserEntity).update({ id: user.id }, { passwordHash });
+      const familyId = randomUUID();
+      const tokens = await this.issueTokens(
+        user,
+        payload.organizationId,
+        familyId,
+        meta,
+        manager.getRepository(RefreshTokenEntity),
+      );
+      await manager.getRepository(RefreshTokenEntity).update(
+        { userId: user.id, revokedAt: IsNull(), familyId: Not(familyId) },
+        { revokedAt: new Date() },
+      );
+      return tokens;
+    });
   }
 
   /** Logout from all devices: revoke all of the user's active tokens. */
@@ -327,6 +373,7 @@ export class AuthService {
     organizationId: string,
     familyId: string,
     meta: RequestMeta,
+    refreshRepo: Repository<RefreshTokenEntity> = this.refreshRepo,
   ): Promise<AuthTokens> {
     const payload: JwtPayload = {
       sub: user.id,
@@ -339,8 +386,8 @@ export class AuthService {
     const ttlMs = parseDurationToMs(
       this.config.get<string>('JWT_REFRESH_TTL', '30d'),
     );
-    await this.refreshRepo.save(
-      this.refreshRepo.create({
+    await refreshRepo.save(
+      refreshRepo.create({
         userId: user.id,
         organizationId,
         tokenHash: this.hashToken(refreshToken),
@@ -364,7 +411,7 @@ export class AuthService {
     locale: AppLocale | undefined,
   ): Promise<void> {
     if (!locale || locale === user.locale) return;
-    await this.usersService.updateProfile(user.id, { locale });
+    await this.usersService.updateSettings(user.id, { locale });
     user.locale = locale;
   }
 

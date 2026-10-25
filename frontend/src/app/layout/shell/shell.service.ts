@@ -15,6 +15,7 @@ const NAV: Array<NavItem & { permission?: Permission }> = [
   { path: '/deals', label: 'nav.deals' },
   { path: '/tasks', label: 'nav.tasks' },
   { path: '/team', label: 'nav.team', permission: PERMISSIONS.MEMBERS_MANAGE },
+  { path: '/profile', label: 'nav.profile' },
 ];
 
 /** Shell business logic. Provided at the ShellComponent level (not a singleton). */

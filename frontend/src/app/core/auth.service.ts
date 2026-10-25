@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import type {
   AcceptInvitationRequest,
   AuthResult,
+  AuthTokens,
   InvitationPreview,
   LoginRequest,
   Permission,
@@ -58,6 +59,21 @@ export class AuthService {
   /** Whether the current user has the permission in the active organization. */
   can(permission: Permission): boolean {
     return this.permissions().includes(permission);
+  }
+
+  /** Uses a new token pair for the current session (e.g. after a password change). */
+  useTokens(tokens: AuthTokens): void {
+    this.tokens.set(tokens);
+  }
+
+  /** Ends every session of the user (all devices), then this one locally. */
+  async logoutEverywhere(): Promise<void> {
+    await firstValueFrom(this.api.post('/auth/logout-all'));
+    this.tokens.clear();
+    this.user.set(null);
+    this.organizationId.set(null);
+    this.permissions.set([]);
+    await this.router.navigate(['/login']);
   }
 
   async logout(): Promise<void> {

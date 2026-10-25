@@ -30,6 +30,7 @@ export const routes: Routes = [
       { path: 'leads', loadComponent: () => import('./features/leads/leads-page').then((m) => m.LeadsPageComponent) },
       { path: 'deals', loadComponent: () => import('./features/deals/deals-board').then((m) => m.DealsBoardComponent) },
       { path: 'tasks', loadComponent: () => import('./features/tasks/tasks-page').then((m) => m.TasksPageComponent) },
+      { path: 'profile', loadComponent: () => import('./features/profile/profile-page').then((m) => m.ProfilePageComponent) },
       {
         path: 'team',
         canActivate: [permissionGuard(PERMISSIONS.MEMBERS_MANAGE)],

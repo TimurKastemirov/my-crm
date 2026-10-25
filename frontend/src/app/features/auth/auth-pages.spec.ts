@@ -37,7 +37,7 @@ describe('signed-out pages', () => {
             chosenBeforeSignIn: () => null,
           },
         },
-        { provide: UsersApi, useValue: { updateProfile: vi.fn() } },
+        { provide: UsersApi, useValue: { updateSettings: vi.fn() } },
       ],
     });
   });

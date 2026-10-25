@@ -4,6 +4,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { RefreshTokenEntity } from './entities/refresh-token.entity.js';
 import { AuthService } from './auth.service.js';
 import { AuthController } from './auth.controller.js';
+import { AccountController } from './account.controller.js';
 import { SecurityModule } from '../security/security.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { OrganizationsModule } from '../organizations/organizations.module.js';
@@ -20,7 +21,7 @@ import { DealsModule } from '../deals/deals.module.js';
     TypeOrmModule.forFeature([RefreshTokenEntity]),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, AccountController],
   providers: [AuthService],
 })
 export class AuthModule {}

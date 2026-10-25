@@ -34,7 +34,7 @@ export class LanguageSwitcherComponentService {
   private async save(locale: AppLocale): Promise<void> {
     const seq = ++this.saveSeq;
     try {
-      await this.usersApi.updateProfile({ locale });
+      await this.usersApi.updateSettings({ locale });
       // Keep the session in sync with the saved profile.
       if (seq === this.saveSeq) this.auth.user.update((u) => u && { ...u, locale });
     } catch {

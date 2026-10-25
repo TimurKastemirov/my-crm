@@ -1,0 +1,89 @@
+<div class="mx-auto flex max-w-2xl flex-col gap-6">
+  <h1 class="text-xl font-semibold text-slate-900">{{ 'profile.title' | translate }}</h1>
+
+  <section aria-labelledby="profile-details-heading" class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5">
+    <h2 id="profile-details-heading" class="text-sm font-semibold text-slate-900">{{ 'profile.details' | translate }}</h2>
+    <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="mt-3">
+      @if (profileError()) {
+        <div class="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ profileError() }}</div>
+      }
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label for="profile-first-name" class="block text-sm font-medium text-slate-700">
+          {{ 'auth.firstName' | translate }}
+          <input id="profile-first-name" name="firstName" formControlName="firstName" autocomplete="given-name" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+        </label>
+        <label for="profile-last-name" class="block text-sm font-medium text-slate-700">
+          {{ 'auth.lastName' | translate }}
+          <input id="profile-last-name" name="lastName" formControlName="lastName" autocomplete="family-name" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+        </label>
+      </div>
+      <label for="profile-email" class="mt-3 block text-sm font-medium text-slate-700">
+        {{ 'auth.email' | translate }}
+        <input id="profile-email" name="email" type="email" readonly [value]="user()?.email ?? ''" aria-describedby="profile-email-hint" class="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 outline-none" />
+      </label>
+      <p id="profile-email-hint" class="mt-1 text-xs text-slate-500">{{ 'profile.emailReadonly' | translate }}</p>
+      <div class="mt-4 flex flex-wrap items-center gap-3">
+        <button type="submit" [disabled]="savingProfile()" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60">
+          {{ savingProfile() ? ('common.saving' | translate) : ('common.save' | translate) }}
+        </button>
+        @if (profileSaved()) {
+          <p class="text-sm text-emerald-700" role="status">{{ 'profile.saved' | translate }}</p>
+        }
+      </div>
+    </form>
+  </section>
+
+  <section aria-labelledby="profile-preferences-heading" class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5">
+    <h2 id="profile-preferences-heading" class="text-sm font-semibold text-slate-900">{{ 'profile.preferences' | translate }}</h2>
+    <div class="mt-3 flex flex-wrap items-center gap-3">
+      <span class="text-sm font-medium text-slate-700">{{ 'lang.label' | translate }}</span>
+      <app-language-switcher controlId="profile-language" />
+    </div>
+    <p class="mt-3 text-sm text-slate-600">{{ 'profile.timeZone' | translate: { zone: timeZone } }}</p>
+  </section>
+
+  <section aria-labelledby="profile-password-heading" class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5">
+    <h2 id="profile-password-heading" class="text-sm font-semibold text-slate-900">{{ 'profile.changePassword' | translate }}</h2>
+    <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="mt-3">
+      @if (passwordError()) {
+        <div id="profile-password-error" class="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ passwordError() }}</div>
+      }
+      <!-- Lets password managers associate the new password with this account. -->
+      <input type="hidden" id="profile-username" name="username" autocomplete="username" [value]="user()?.email ?? ''" />
+      <label for="profile-current-password" class="block text-sm font-medium text-slate-700">
+        {{ 'profile.currentPassword' | translate }}
+        <input id="profile-current-password" name="currentPassword" type="password" formControlName="currentPassword" autocomplete="current-password" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+      </label>
+      <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label for="profile-new-password" class="block text-sm font-medium text-slate-700">
+          {{ 'profile.newPassword' | translate }}
+          <input id="profile-new-password" name="newPassword" type="password" formControlName="newPassword" autocomplete="new-password" aria-describedby="profile-password-hint" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+        </label>
+        <label for="profile-confirm-password" class="block text-sm font-medium text-slate-700">
+          {{ 'profile.confirmPassword' | translate }}
+          <input id="profile-confirm-password" name="confirmPassword" type="password" formControlName="confirmPassword" autocomplete="new-password" [attr.aria-invalid]="passwordMismatch() || null" [attr.aria-describedby]="passwordMismatch() ? 'profile-password-error' : null" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+        </label>
+      </div>
+      <p id="profile-password-hint" class="mt-1 text-xs text-slate-500">{{ 'profile.passwordHint' | translate }}</p>
+      <div class="mt-4 flex flex-wrap items-center gap-3">
+        <button type="submit" [disabled]="changingPassword()" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60">
+          {{ changingPassword() ? ('common.saving' | translate) : ('profile.changePassword' | translate) }}
+        </button>
+        @if (passwordChanged()) {
+          <p class="text-sm text-emerald-700" role="status">{{ 'profile.passwordChanged' | translate }}</p>
+        }
+      </div>
+    </form>
+  </section>
+
+  <section aria-labelledby="profile-sessions-heading" class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5">
+    <h2 id="profile-sessions-heading" class="text-sm font-semibold text-slate-900">{{ 'profile.sessions' | translate }}</h2>
+    <p class="mt-2 text-sm text-slate-600">{{ 'profile.sessionsHint' | translate }}</p>
+    @if (sessionsError()) {
+      <div class="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ sessionsError() }}</div>
+    }
+    <button type="button" (click)="logoutEverywhere()" [disabled]="signingOutEverywhere()" class="mt-3 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60">
+      {{ 'profile.logoutEverywhere' | translate }}
+    </button>
+  </section>
+</div>

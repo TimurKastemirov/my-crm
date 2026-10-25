@@ -16,7 +16,7 @@ describe('LanguageSwitcherComponent', () => {
     apply: vi.fn((l: AppLocale) => lang.set(l)),
     choose: vi.fn((l: AppLocale) => lang.set(l)),
   };
-  const updateProfile = vi.fn();
+  const updateSettings = vi.fn();
   const isAuthenticated = signal(false);
   const user = signal<{ locale: string } | null>(null);
 
@@ -25,13 +25,13 @@ describe('LanguageSwitcherComponent', () => {
     isAuthenticated.set(false);
     user.set(null);
     vi.clearAllMocks();
-    updateProfile.mockResolvedValue({});
+    updateSettings.mockResolvedValue({});
     TestBed.configureTestingModule({
       imports: [LanguageSwitcherComponent],
       providers: [
         provideTranslateService({ fallbackLang: 'en' }),
         { provide: LocaleService, useValue: locale },
-        { provide: UsersApi, useValue: { updateProfile } },
+        { provide: UsersApi, useValue: { updateSettings } },
         { provide: AuthService, useValue: { isAuthenticated, user } },
       ],
     });
@@ -63,7 +63,7 @@ describe('LanguageSwitcherComponent', () => {
     const { select } = render();
     pick(select, 'uk');
     expect(locale.choose).toHaveBeenCalledWith('uk');
-    expect(updateProfile).not.toHaveBeenCalled();
+    expect(updateSettings).not.toHaveBeenCalled();
   });
 
   function signIn(profileLocale: AppLocale): void {
@@ -77,14 +77,14 @@ describe('LanguageSwitcherComponent', () => {
     pick(select, 'ru');
     expect(locale.apply).toHaveBeenCalledWith('ru');
     expect(locale.choose).not.toHaveBeenCalled();
-    expect(updateProfile).toHaveBeenCalledWith({ locale: 'ru' });
+    expect(updateSettings).toHaveBeenCalledWith({ locale: 'ru' });
     await fixture.whenStable();
     expect(user()?.locale).toBe('ru');
   });
 
   it('signed in: a failed save returns to the profile language', async () => {
     signIn('en');
-    updateProfile.mockRejectedValue(new Error('offline'));
+    updateSettings.mockRejectedValue(new Error('offline'));
     const { fixture, select } = render();
     pick(select, 'ru');
     await fixture.whenStable();
@@ -95,7 +95,7 @@ describe('LanguageSwitcherComponent', () => {
   it('signed in: only the latest of quick switches decides', async () => {
     signIn('en');
     let failFirst!: (e: Error) => void;
-    updateProfile
+    updateSettings
       .mockImplementationOnce(() => new Promise((_, reject) => (failFirst = reject)))
       .mockResolvedValueOnce({});
     const { fixture, select } = render();

@@ -1,5 +1,5 @@
 <select
-  id="lang-switcher"
+  [id]="controlId()"
   name="language"
   (change)="change($any($event.target).value)"
   [attr.aria-label]="'lang.label' | translate"

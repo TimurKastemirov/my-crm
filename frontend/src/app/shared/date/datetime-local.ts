@@ -17,3 +17,12 @@ export function localInputToIso(value: string): string {
   // A date-time string without an offset is parsed as local time.
   return new Date(value).toISOString();
 }
+
+/** The browser's IANA time zone (e.g. "Europe/Kyiv"), or null if the runtime can't tell. */
+export function browserTimeZone(): string | null {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  } catch {
+    return null;
+  }
+}

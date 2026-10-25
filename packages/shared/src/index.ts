@@ -259,9 +259,25 @@ export interface UserDto extends BaseEntity {
 export const SUPPORTED_LOCALES = ['en', 'ru', 'uk'] as const;
 export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
 
-/** PATCH /users/me — update the current user's settings. */
+/** PATCH /users/me — update the current user's profile (email is read-only). */
 export interface UpdateProfileRequest {
+  firstName?: string;
+  lastName?: string;
+}
+
+/**
+ * PATCH /users/me/settings. `timezone` is an IANA name (e.g. "Europe/Kyiv"); dates are always
+ * stored in UTC and shown in the browser's time zone — the saved zone is for server-side features.
+ */
+export interface UpdateSettingsRequest {
   locale?: AppLocale;
+  timezone?: string;
+}
+
+/** PATCH /users/me/password — ends all other sessions; the response is a new token pair. */
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
 }
 
 export interface RoleDto extends BaseEntity {
