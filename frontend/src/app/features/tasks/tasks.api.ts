@@ -5,10 +5,10 @@ import { ApiClient } from '../../core/api-client';
 
 export interface TaskInput {
   title?: string;
-  description?: string;
+  description?: string | null;
   priority?: TaskPriority;
   status?: TaskStatus;
-  dueAt?: string;
+  dueAt?: string | null;
 }
 
 export interface TaskListParams {

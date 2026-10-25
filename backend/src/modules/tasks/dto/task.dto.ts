@@ -1,4 +1,4 @@
-import { PartialType } from '@nestjs/swagger';
+import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import {
   IsDateString,
   IsIn,
@@ -15,10 +15,11 @@ export class CreateTaskDto {
   @MaxLength(200)
   title!: string;
 
+  @ApiPropertyOptional({ nullable: true, description: 'null clears it' })
   @IsOptional()
   @IsString()
   @MaxLength(4000)
-  description?: string;
+  description?: string | null;
 
   @IsOptional()
   @IsUUID()
@@ -32,9 +33,10 @@ export class CreateTaskDto {
   @IsIn(Object.values(TaskPriority))
   priority?: TaskPriority;
 
+  @ApiPropertyOptional({ nullable: true, description: 'ISO timestamp in UTC; null clears it' })
   @IsOptional()
   @IsDateString()
-  dueAt?: string;
+  dueAt?: string | null;
 }
 
 export class UpdateTaskDto extends PartialType(CreateTaskDto) {}

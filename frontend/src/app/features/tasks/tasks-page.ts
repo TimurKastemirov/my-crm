@@ -6,6 +6,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TaskPriority, TaskStatus, type SortOrder, type TaskDto } from '@crm/shared';
 import { parseEnumParam, parsePage, parseSearch, SORT_ORDERS } from '../../shared/list-query/list-query';
+import { isoToLocalInput } from '../../shared/date/datetime-local';
 import { ModalComponent } from '../../shared/ui/modal/modal';
 import { PaginatorComponent } from '../../shared/ui/paginator/paginator';
 import { TasksPageComponentService } from './tasks-page.service';
@@ -36,6 +37,8 @@ export class TasksPageComponent {
 
   protected readonly modalOpen = signal(false);
   protected readonly editingId = signal<string | null>(null);
+  /** Due date of the task being edited, to tell whether the user changed it. */
+  private editingDueAt: string | null = null;
   protected readonly saving = signal(false);
 
   // Mobile filter sheet: draft state, committed only on Apply.
@@ -172,17 +175,19 @@ export class TasksPageComponent {
 
   protected openCreate(): void {
     this.editingId.set(null);
+    this.editingDueAt = null;
     this.form.reset({ title: '', description: '', priority: 'normal', dueAt: '' });
     this.modalOpen.set(true);
   }
 
   protected openEdit(task: TaskDto): void {
     this.editingId.set(task.id);
+    this.editingDueAt = task.dueAt;
     this.form.setValue({
       title: task.title,
       description: task.description ?? '',
       priority: task.priority,
-      dueAt: task.dueAt ? new Date(task.dueAt).toISOString().slice(0, 16) : '',
+      dueAt: task.dueAt ? isoToLocalInput(task.dueAt) : '',
     });
     this.modalOpen.set(true);
   }
@@ -195,7 +200,7 @@ export class TasksPageComponent {
     this.saving.set(true);
     this.error.set(null);
     try {
-      await this.service.save(this.editingId(), this.form.getRawValue());
+      await this.service.save(this.editingId(), this.form.getRawValue(), this.editingDueAt);
       this.modalOpen.set(false);
       await this.load();
     } catch (e) {
