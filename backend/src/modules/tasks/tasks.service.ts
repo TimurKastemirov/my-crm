@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsOrder, FindOptionsWhere, ILike, Repository, IsNull } from 'typeorm';
+import { escapeLike } from '../../common/search.js';
 import {
   AUDIT_ACTIONS,
   OrganizationMemberStatus,
@@ -40,7 +41,7 @@ export class TasksService {
     if (query.priority) base.priority = query.priority;
     if (query.assigneeId) base.assigneeId = query.assigneeId;
     const where: FindOptionsWhere<TaskEntity> | FindOptionsWhere<TaskEntity>[] = query.search
-      ? { ...base, title: ILike(`%${query.search}%`) }
+      ? { ...base, title: ILike(`%${escapeLike(query.search)}%`) }
       : base;
 
     const [rows, total] = await this.repo.findAndCount({

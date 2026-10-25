@@ -75,8 +75,8 @@
   "contacts": {
     "title": "Contacts",
     "add": "+ Contact",
-    "searchPlaceholder": "Search and press Enter…",
-    "searchAria": "Search contacts",
+    "searchPlaceholder": "Name, email or phone + Enter…",
+    "searchAria": "Search contacts by name, email or phone",
     "empty": "No contacts yet",
     "newTitle": "New contact",
     "editTitle": "Edit contact",
@@ -93,8 +93,8 @@
   "companies": {
     "title": "Companies",
     "add": "+ Company",
-    "searchPlaceholder": "Search and press Enter…",
-    "searchAria": "Search companies",
+    "searchPlaceholder": "Name, website or industry + Enter…",
+    "searchAria": "Search companies by name, website or industry",
     "empty": "No companies yet",
     "newTitle": "New company",
     "editTitle": "Edit company",
@@ -110,8 +110,8 @@
   "leads": {
     "title": "Leads",
     "add": "+ Lead",
-    "searchPlaceholder": "Search by source + Enter…",
-    "searchAria": "Search leads by source",
+    "searchPlaceholder": "Source, contact or company + Enter…",
+    "searchAria": "Search leads by source, contact or company",
     "statusFilterAria": "Filter by status",
     "statusAria": "Lead status",
     "empty": "No leads yet",
@@ -160,8 +160,8 @@
     "stageFilterAria": "Filter by stage",
     "stageAria": "Deal stage",
     "statusFilterAria": "Filter by status",
-    "searchAria": "Search deals",
-    "searchPlaceholder": "Search by title…",
+    "searchAria": "Search deals by title, contact or company",
+    "searchPlaceholder": "Title, contact or company…",
     "emptyStage": "No deals in this stage"
   },
   "dealStage": {

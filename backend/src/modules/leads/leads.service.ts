@@ -4,7 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsOrder, FindOptionsWhere, ILike, Repository, IsNull } from 'typeorm';
+import { FindOptionsOrder, FindOptionsWhere, Repository, IsNull } from 'typeorm';
+import { linkedMatchSubquery, searchIdsIn, toSearchQuery } from '../../common/search.js';
 import { AUDIT_ACTIONS, LeadStatus, type DealDto, type LeadDto, type Paginated } from '@crm/shared';
 import { LeadEntity } from './entities/lead.entity.js';
 import { ContactEntity } from '../contacts/entities/contact.entity.js';
@@ -45,8 +46,13 @@ export class LeadsService {
 
     const base: FindOptionsWhere<LeadEntity> = { organizationId };
     if (query.status) base.status = query.status;
-    const where: FindOptionsWhere<LeadEntity>[] | FindOptionsWhere<LeadEntity> =
-      query.search ? { ...base, source: ILike(`%${query.search}%`) } : base;
+    if (query.search) {
+      // Source plus the linked contact and company, by word prefix.
+      const searchQuery = toSearchQuery(query.search);
+      if (!searchQuery) return toPaginated([], 0, page, limit);
+      base.id = searchIdsIn(linkedMatchSubquery('leads'), organizationId, searchQuery);
+    }
+    const where = base;
 
     const [rows, total] = await this.repo.findAndCount({
       where,

@@ -8,6 +8,9 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+// GIN index on the generated `search_vector` column (AddSearchVector migration); the column
+// is maintained by PostgreSQL and not mapped. Unmanaged so `migration:generate` leaves it alone.
+@Index('idx_contacts_search', { synchronize: false })
 @Entity('contacts')
 @Index('idx_contacts_org_owner', ['organizationId', 'ownerId'])
 @Index('idx_contacts_org_company', ['organizationId', 'companyId'])

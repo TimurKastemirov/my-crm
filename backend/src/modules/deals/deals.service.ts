@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsOrder, FindOptionsWhere, ILike, Repository, IsNull } from 'typeorm';
+import { FindOptionsOrder, FindOptionsWhere, Repository, IsNull } from 'typeorm';
+import { linkedMatchSubquery, searchIdsIn, toSearchQuery } from '../../common/search.js';
 import { AUDIT_ACTIONS, DealStatus, type DealDto, type Paginated } from '@crm/shared';
 import { DealEntity } from './entities/deal.entity.js';
 import { PipelineStageEntity } from './entities/pipeline-stage.entity.js';
@@ -39,9 +40,13 @@ export class DealsService {
     if (query.pipelineId) base.pipelineId = query.pipelineId;
     if (query.stageId) base.stageId = query.stageId;
     if (query.status) base.status = query.status;
-    const where: FindOptionsWhere<DealEntity> | FindOptionsWhere<DealEntity>[] = query.search
-      ? { ...base, title: ILike(`%${query.search}%`) }
-      : base;
+    if (query.search) {
+      // Title plus the linked contact and company, by word prefix.
+      const searchQuery = toSearchQuery(query.search);
+      if (!searchQuery) return toPaginated([], 0, page, limit);
+      base.id = searchIdsIn(linkedMatchSubquery('deals'), organizationId, searchQuery);
+    }
+    const where = base;
 
     const [rows, total] = await this.repo.findAndCount({
       where,

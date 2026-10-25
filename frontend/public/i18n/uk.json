@@ -75,8 +75,8 @@
   "contacts": {
     "title": "Клієнти",
     "add": "+ Контакт",
-    "searchPlaceholder": "Пошук і натисніть Enter…",
-    "searchAria": "Пошук клієнтів",
+    "searchPlaceholder": "Ім’я, email або телефон + Enter…",
+    "searchAria": "Пошук клієнтів за ім’ям, email або телефоном",
     "empty": "Поки немає клієнтів",
     "newTitle": "Новий клієнт",
     "editTitle": "Редагувати клієнта",
@@ -93,8 +93,8 @@
   "companies": {
     "title": "Компанії",
     "add": "+ Компанія",
-    "searchPlaceholder": "Пошук і натисніть Enter…",
-    "searchAria": "Пошук компаній",
+    "searchPlaceholder": "Назва, сайт або галузь + Enter…",
+    "searchAria": "Пошук компаній за назвою, сайтом або галуззю",
     "empty": "Поки немає компаній",
     "newTitle": "Нова компанія",
     "editTitle": "Редагувати компанію",
@@ -110,8 +110,8 @@
   "leads": {
     "title": "Ліди",
     "add": "+ Лід",
-    "searchPlaceholder": "Пошук за джерелом + Enter…",
-    "searchAria": "Пошук лідів за джерелом",
+    "searchPlaceholder": "Джерело, клієнт або компанія + Enter…",
+    "searchAria": "Пошук лідів за джерелом, клієнтом або компанією",
     "statusFilterAria": "Фільтр за статусом",
     "statusAria": "Статус ліда",
     "empty": "Поки немає лідів",
@@ -160,8 +160,8 @@
     "stageFilterAria": "Фільтр за етапом",
     "stageAria": "Етап угоди",
     "statusFilterAria": "Фільтр за статусом",
-    "searchAria": "Пошук угод",
-    "searchPlaceholder": "Пошук за назвою…",
+    "searchAria": "Пошук угод за назвою, клієнтом або компанією",
+    "searchPlaceholder": "Назва, клієнт або компанія…",
     "emptyStage": "Немає угод на цьому етапі"
   },
   "dealStage": {

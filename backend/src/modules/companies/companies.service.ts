@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsOrder, FindOptionsWhere, ILike, Repository, IsNull } from 'typeorm';
+import { FindOptionsOrder, FindOptionsWhere, Repository, IsNull } from 'typeorm';
+import { ownMatchSubquery, searchIdsIn, toSearchQuery } from '../../common/search.js';
 import { AUDIT_ACTIONS, type CompanyDto, type Paginated } from '@crm/shared';
 import { CompanyEntity } from './entities/company.entity.js';
 import { CreateCompanyDto, UpdateCompanyDto } from './dto/company.dto.js';
@@ -27,14 +28,13 @@ export class CompaniesService {
     const sortBy = resolveSort(query.sortBy, SORTABLE, 'createdAt');
     const dir = query.sortOrder === 'asc' ? 'ASC' : 'DESC';
 
-    const where: FindOptionsWhere<CompanyEntity>[] | FindOptionsWhere<CompanyEntity> =
-      query.search
-        ? [
-            { organizationId, name: ILike(`%${query.search}%`) },
-            { organizationId, website: ILike(`%${query.search}%`) },
-            { organizationId, industry: ILike(`%${query.search}%`) },
-          ]
-        : { organizationId };
+    const where: FindOptionsWhere<CompanyEntity> = { organizationId };
+    if (query.search) {
+      // Name, website parts and industry, by word prefix.
+      const searchQuery = toSearchQuery(query.search);
+      if (!searchQuery) return toPaginated([], 0, page, limit);
+      where.id = searchIdsIn(ownMatchSubquery('companies'), organizationId, searchQuery);
+    }
 
     const [rows, total] = await this.repo.findAndCount({
       where,

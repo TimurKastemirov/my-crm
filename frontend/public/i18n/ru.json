@@ -75,8 +75,8 @@
   "contacts": {
     "title": "Клиенты",
     "add": "+ Контакт",
-    "searchPlaceholder": "Поиск и нажмите Enter…",
-    "searchAria": "Поиск клиентов",
+    "searchPlaceholder": "Имя, email или телефон + Enter…",
+    "searchAria": "Поиск клиентов по имени, email или телефону",
     "empty": "Пока нет клиентов",
     "newTitle": "Новый клиент",
     "editTitle": "Изменить клиента",
@@ -93,8 +93,8 @@
   "companies": {
     "title": "Компании",
     "add": "+ Компания",
-    "searchPlaceholder": "Поиск и нажмите Enter…",
-    "searchAria": "Поиск компаний",
+    "searchPlaceholder": "Название, сайт или отрасль + Enter…",
+    "searchAria": "Поиск компаний по названию, сайту или отрасли",
     "empty": "Пока нет компаний",
     "newTitle": "Новая компания",
     "editTitle": "Изменить компанию",
@@ -110,8 +110,8 @@
   "leads": {
     "title": "Лиды",
     "add": "+ Лид",
-    "searchPlaceholder": "Поиск по источнику + Enter…",
-    "searchAria": "Поиск лидов по источнику",
+    "searchPlaceholder": "Источник, клиент или компания + Enter…",
+    "searchAria": "Поиск лидов по источнику, клиенту или компании",
     "statusFilterAria": "Фильтр по статусу",
     "statusAria": "Статус лида",
     "empty": "Пока нет лидов",
@@ -160,8 +160,8 @@
     "stageFilterAria": "Фильтр по этапу",
     "stageAria": "Этап сделки",
     "statusFilterAria": "Фильтр по статусу",
-    "searchAria": "Поиск сделок",
-    "searchPlaceholder": "Поиск по названию…",
+    "searchAria": "Поиск сделок по названию, клиенту или компании",
+    "searchPlaceholder": "Название, клиент или компания…",
     "emptyStage": "Нет сделок на этом этапе"
   },
   "dealStage": {

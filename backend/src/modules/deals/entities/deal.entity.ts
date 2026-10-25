@@ -9,6 +9,9 @@ import {
 } from 'typeorm';
 import { DealStatus } from '@crm/shared';
 
+// GIN index on the generated `search_vector` column (AddSearchVector migration); the column
+// is maintained by PostgreSQL and not mapped. Unmanaged so `migration:generate` leaves it alone.
+@Index('idx_deals_search', { synchronize: false })
 @Entity('deals')
 @Index('idx_deals_org_pipeline_stage', ['organizationId', 'pipelineId', 'stageId'])
 @Index('idx_deals_org_owner_status', ['organizationId', 'ownerId', 'status'])

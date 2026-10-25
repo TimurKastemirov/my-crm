@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsOrder, FindOptionsWhere, ILike, Repository, IsNull } from 'typeorm';
+import { FindOptionsOrder, FindOptionsWhere, Repository, IsNull } from 'typeorm';
+import { ownMatchSubquery, searchIdsIn, toSearchQuery } from '../../common/search.js';
 import { AUDIT_ACTIONS, type ContactDto, type Paginated } from '@crm/shared';
 import { ContactEntity } from './entities/contact.entity.js';
 import { CompanyEntity } from '../companies/entities/company.entity.js';
@@ -30,15 +31,13 @@ export class ContactsService {
     const sortBy = resolveSort(query.sortBy, SORTABLE, 'createdAt');
     const dir = query.sortOrder === 'asc' ? 'ASC' : 'DESC';
 
-    const s = query.search ? `%${query.search}%` : undefined;
-    const where: FindOptionsWhere<ContactEntity>[] | FindOptionsWhere<ContactEntity> = s
-      ? [
-          { organizationId, firstName: ILike(s) },
-          { organizationId, lastName: ILike(s) },
-          { organizationId, email: ILike(s) },
-          { organizationId, phone: ILike(s) },
-        ]
-      : { organizationId };
+    const where: FindOptionsWhere<ContactEntity> = { organizationId };
+    if (query.search) {
+      // Name, email parts and phone digits, by word prefix.
+      const searchQuery = toSearchQuery(query.search, { phone: true });
+      if (!searchQuery) return toPaginated([], 0, page, limit);
+      where.id = searchIdsIn(ownMatchSubquery('contacts'), organizationId, searchQuery);
+    }
 
     const [rows, total] = await this.repo.findAndCount({
       where,
