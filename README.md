@@ -118,6 +118,7 @@ POSTGRES_HOST / POSTGRES_PORT / POSTGRES_DB / POSTGRES_USER / POSTGRES_PASSWORD
 REDIS_HOST / REDIS_PORT / REDIS_PASSWORD / REDIS_TLS_ENABLED
 JWT_ACCESS_SECRET / JWT_REFRESH_SECRET / JWT_ACCESS_TTL / JWT_REFRESH_TTL   # for the Auth module
 CORS_ORIGINS
+TRUST_PROXY_HOPS                                                            # proxies trusted for the client IP (1 behind the prod nginx)
 ```
 
 `.env` files are **not tracked by git** (see `.gitignore`) — secrets are never committed.

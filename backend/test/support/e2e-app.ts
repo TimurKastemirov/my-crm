@@ -2,12 +2,12 @@ import 'reflect-metadata';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { DataSource } from 'typeorm';
-import { AllExceptionsFilter } from '../../src/common/filters/all-exceptions.filter.js';
+import { configureApp } from '../../src/app.setup.js';
 
 /**
  * DB-backed e2e suites run only against an explicitly configured test database
@@ -21,6 +21,8 @@ export const hasE2eDatabase =
 export async function createE2eApp(): Promise<INestApplication> {
   process.env.JWT_ACCESS_SECRET ??= 'e2e-access-secret-0123456789';
   process.env.JWT_REFRESH_SECRET ??= 'e2e-refresh-secret-0123456789';
+  // Like prod behind nginx: one trusted proxy hop, so X-Forwarded-For sets the client IP.
+  process.env.TRUST_PROXY_HOPS ??= '1';
   await runMigrations();
 
   const { AppModule } = await import('../../src/app.module.js');
@@ -30,15 +32,7 @@ export async function createE2eApp(): Promise<INestApplication> {
     .compile();
 
   const app = moduleRef.createNestApplication(new ExpressAdapter());
-  app.setGlobalPrefix('api/v1');
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      forbidNonWhitelisted: true,
-    }),
-  );
-  app.useGlobalFilters(new AllExceptionsFilter());
+  configureApp(app);
   // Listen explicitly on IPv4: supertest's implicit ephemeral listen() is flaky on Node 24 (ECONNREFUSED).
   await app.listen(0, '127.0.0.1');
   return app;

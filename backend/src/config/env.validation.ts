@@ -44,6 +44,10 @@ export const envSchema = z.object({
 
   // Comma-separated list of origins, or '*' in dev.
   CORS_ORIGINS: z.string().default('*'),
+
+  // Reverse proxies in front of the API whose X-Forwarded-For is trusted (1 = nginx in prod).
+  // 0 = none: req.ip is the socket address. Never trust more hops than really exist.
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
 });
 
 export type Env = z.infer<typeof envSchema>;
